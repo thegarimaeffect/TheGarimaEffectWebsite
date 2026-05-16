@@ -1,0 +1,17 @@
+{
+  "name": "the-garima-effect-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "status": "supabase status",
+    "reset": "supabase db reset",
+    "studio": "supabase studio",
+    "migration:new": "supabase migration new",
+    "migration:up": "supabase migration up"
+  },
+  "devDependencies": {
+    "supabase": "^1.207.9"
+  }
+}
