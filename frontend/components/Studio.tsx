@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import Image from "next/image";
 import { useRef } from "react";
 
 /**
@@ -21,7 +20,6 @@ export default function Studio() {
   // Scroll-driven 3D: the screen cluster tilts from deep perspective to flat
   const clusterRotX = useTransform(scrollYProgress, [0, 0.5, 1], [16, 2, -8]);
   const clusterY = useTransform(scrollYProgress, [0, 1], ["12%", "-12%"]);
-  const portraitY = useTransform(scrollYProgress, [0, 1], ["8%", "-8%"]);
 
   return (
     <section
@@ -87,48 +85,24 @@ export default function Studio() {
             like the brands we serve.
           </motion.p>
 
-          {/* Founder portrait (the new image) */}
           <motion.div
-            style={{ y: portraitY }}
-            initial={{ opacity: 0, scale: 0.94 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative mt-10 h-[300px] md:h-[420px] w-full max-w-[420px]"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="mt-8 flex flex-wrap gap-2.5"
           >
-            <div
-              aria-hidden
-              className="absolute inset-x-6 bottom-4 top-10 rounded-[40px]"
-              style={{
-                background:
-                  "linear-gradient(160deg, rgba(232,84,122,0.30), rgba(184,156,224,0.28))",
-                filter: "blur(2px)",
-              }}
-            />
-            <Image
-              src="/garima-studio.png"
-              alt="Garima Rana — founder"
-              fill
-              sizes="(max-width: 1024px) 80vw, 36vw"
-              style={{ objectFit: "contain", objectPosition: "bottom center" }}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.6, rotate: 10 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: -6 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, type: "spring", damping: 12 }}
-              className="absolute -bottom-2 -right-2 px-5 py-3 rounded-2xl"
-              style={{
-                background: "linear-gradient(135deg, #e8547a, #b89ce0)",
-                color: "white",
-                boxShadow: "0 16px 40px rgba(232,84,122,0.4)",
-                fontFamily: "var(--font-script), cursive",
-                fontSize: 18,
-                fontWeight: 700,
-              }}
-            >
-              built by the studio ✦
-            </motion.div>
+            {[
+              "Welcome & intake",
+              "Living calendar",
+              "Client approval",
+              "Real-time chat",
+              "Leads CRM",
+            ].map((t) => (
+              <span key={t} className="pill pink">
+                ✦ {t}
+              </span>
+            ))}
           </motion.div>
         </div>
 

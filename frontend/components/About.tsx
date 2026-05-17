@@ -68,47 +68,39 @@ export default function About() {
         </span>
       </motion.div>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 py-24 md:py-32 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 py-24 md:py-32 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 lg:items-center">
         {/* LEFT: PHOTO + DECORATION */}
         <motion.div
           style={{ y: photoY }}
           className="lg:col-span-5 relative h-[480px] md:h-[640px]"
         >
-          {/* Tilted frame behind */}
+          {/* Tilted accent border — no fill, just a rose outline */}
           <motion.div
             initial={{ opacity: 0, rotate: -2, scale: 0.95 }}
             whileInView={{ opacity: 1, rotate: -4, scale: 1 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.9, ease: "easeOut" }}
             className="absolute inset-4 rounded-[36px] border-2"
-            style={{
-              borderColor: "rgba(232,84,122,0.45)",
-              background:
-                "linear-gradient(135deg, rgba(255,200,220,0.4), rgba(200,170,240,0.3))",
-            }}
+            style={{ borderColor: "rgba(232,84,122,0.35)" }}
           />
 
-          {/* Photo */}
+          {/* Photo — transparent background, no fill */}
           <motion.div
             initial={{ opacity: 0, y: 60, rotate: 4 }}
             whileInView={{ opacity: 1, y: 0, rotate: 2 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 1.0, ease: "easeOut", delay: 0.1 }}
             className="absolute inset-0 rounded-[36px] overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(160deg, rgba(255,200,220,0.6), rgba(200,170,240,0.6))",
-              boxShadow: "0 30px 80px rgba(155,127,199,0.3)",
-            }}
+            style={{ background: "transparent" }}
           >
             <Image
-              src="/garima.png"
+              src="/garima-studio.png"
               alt="Garima Rana"
               fill
               sizes="(max-width: 1024px) 100vw, 40vw"
               style={{
-                objectFit: "cover",
-                objectPosition: "center top",
+                objectFit: "contain",
+                objectPosition: "center center",
               }}
             />
             {/* Glass overlay corner badge */}

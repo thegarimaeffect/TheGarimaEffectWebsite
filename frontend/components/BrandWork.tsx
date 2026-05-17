@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
 const PROJECTS = [
@@ -57,123 +56,170 @@ const PROJECTS = [
 ];
 
 export default function BrandWork() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
+  const scroller = useRef<HTMLDivElement>(null);
+  const drag = useRef({ down: false, startX: 0, startLeft: 0, moved: false });
 
-  // Map vertical scroll to horizontal translate.
-  // We move the track from 0 to -(N-1) * 100vw / N - so 5 cards move 4/5 of the way.
-  const x = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0vw", `-${(PROJECTS.length - 1) * 86}vw`]
-  );
+  function nudge(dir: 1 | -1) {
+    const el = scroller.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  }
+
+  // Drag-to-scroll (desktop). Touch devices already pan natively.
+  function onPointerDown(e: React.PointerEvent) {
+    const el = scroller.current;
+    if (!el) return;
+    drag.current = {
+      down: true,
+      startX: e.clientX,
+      startLeft: el.scrollLeft,
+      moved: false,
+    };
+    el.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    const el = scroller.current;
+    if (!el || !drag.current.down) return;
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 4) drag.current.moved = true;
+    el.scrollLeft = drag.current.startLeft - dx;
+  }
+  function endDrag(e: React.PointerEvent) {
+    const el = scroller.current;
+    drag.current.down = false;
+    if (el && el.hasPointerCapture?.(e.pointerId))
+      el.releasePointerCapture(e.pointerId);
+  }
 
   return (
-    <section id="work" className="stack-card relative">
-      {/* Outer wrapper — vertical height controls how much horizontal scroll happens */}
-      <div
-        ref={ref}
-        style={{ height: `${PROJECTS.length * 90}vh` }}
-        className="relative"
-      >
-        {/* Pinned viewport */}
-        <div
-          className="sticky top-0 h-screen w-screen overflow-hidden flex flex-col"
-          style={{
-            background:
-              "radial-gradient(ellipse at 70% 20%, rgba(255,200,220,0.6), transparent 55%)," +
-              "radial-gradient(ellipse at 20% 80%, rgba(200,170,240,0.55), transparent 55%)," +
-              "linear-gradient(135deg, #fff0f5 0%, #f5dff0 50%, #ead8f5 100%)",
-          }}
-        >
-          {/* Section header */}
-          <div className="relative z-20 px-6 md:px-12 pt-24 md:pt-28 max-w-[1500px] mx-auto w-full">
-            <div className="flex items-end justify-between flex-wrap gap-4">
-              <div>
-                <p className="section-eyebrow-rose mb-3">
-                  ✦ The Brand Work
-                </p>
-                <h2
-                  className="section-script"
-                  style={{ fontSize: "clamp(44px, 6.5vw, 92px)" }}
-                >
-                  Selected Projects
-                </h2>
-              </div>
-              <div className="text-right">
-                <p
-                  className="text-[11px] tracking-[0.4em] uppercase mb-1"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  Scroll → to explore
-                </p>
-                <p
-                  className="text-[12px] tracking-[0.18em] font-bold"
-                  style={{ color: "var(--color-text-deep)" }}
-                >
-                  {PROJECTS.length} Case Studies
-                </p>
-              </div>
-            </div>
-            {/* Progress rail */}
-            <div
-              className="mt-8 h-[3px] w-full rounded-full overflow-hidden"
-              style={{ background: "rgba(232,84,122,0.15)" }}
+    <section
+      id="work"
+      className="stack-card relative min-h-screen overflow-hidden flex flex-col"
+      style={{
+        background:
+          "radial-gradient(ellipse at 70% 20%, rgba(255,200,220,0.6), transparent 55%)," +
+          "radial-gradient(ellipse at 20% 80%, rgba(200,170,240,0.55), transparent 55%)," +
+          "linear-gradient(135deg, #fff0f5 0%, #f5dff0 50%, #ead8f5 100%)",
+      }}
+    >
+      {/* Section header */}
+      <div className="relative z-20 px-6 md:px-12 pt-24 md:pt-28 max-w-[1500px] mx-auto w-full">
+        <div className="flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <p className="section-eyebrow-rose mb-3">✦ The Brand Work</p>
+            <h2
+              className="section-script"
+              style={{ fontSize: "clamp(44px, 6.5vw, 92px)" }}
             >
-              <motion.div
-                style={{ scaleX: scrollYProgress, transformOrigin: "left" }}
-                className="h-full"
+              Selected Projects
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p
+                className="text-[11px] tracking-[0.4em] uppercase mb-1"
+                style={{ color: "var(--color-text-muted)" }}
               >
-                <div
-                  className="h-full"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, #e8547a 0%, #b89ce0 100%)",
-                  }}
-                />
-              </motion.div>
+                Drag or use arrows
+              </p>
+              <p
+                className="text-[12px] tracking-[0.18em] font-bold"
+                style={{ color: "var(--color-text-deep)" }}
+              >
+                {PROJECTS.length} Case Studies
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <ArrowBtn dir="left" onClick={() => nudge(-1)} />
+              <ArrowBtn dir="right" onClick={() => nudge(1)} />
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Horizontal track */}
-          <motion.div
-            style={{ x }}
-            className="flex items-center gap-6 md:gap-10 mt-12 md:mt-16 pl-6 md:pl-12 flex-1"
+      {/* User-controlled horizontal scroller */}
+      <div
+        ref={scroller}
+        data-lenis-prevent
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        className="no-scrollbar flex items-center gap-6 md:gap-10 mt-10 md:mt-14 px-6 md:px-12 pb-10 flex-1 overflow-x-auto cursor-grab active:cursor-grabbing"
+        style={{
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {PROJECTS.map((p, i) => (
+          <div
+            key={p.n}
+            style={{ scrollSnapAlign: "center" }}
+            className="flex-shrink-0"
+            onClickCapture={(e) => {
+              // swallow click if it was a drag, so cards don't trigger on drag-release
+              if (drag.current.moved) {
+                e.stopPropagation();
+                e.preventDefault();
+              }
+            }}
           >
-            {PROJECTS.map((p, i) => (
-              <ProjectCard key={p.n} project={p} index={i} />
-            ))}
+            <ProjectCard project={p} index={i} />
+          </div>
+        ))}
 
-            {/* End slate */}
-            <div className="flex-shrink-0 w-[80vw] md:w-[60vw] flex items-center justify-center pr-12">
-              <div className="text-center max-w-md">
-                <p
-                  className="text-[10px] tracking-[0.5em] uppercase mb-4"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  ✦ End of Reel
-                </p>
-                <h3
-                  className="section-script"
-                  style={{ fontSize: "clamp(40px, 5vw, 70px)" }}
-                >
-                  Ready to be next?
-                </h3>
-                <p
-                  className="mt-4 text-[14px]"
-                  style={{ color: "var(--color-text-body)" }}
-                >
-                  60+ brands and counting. The bench has room for one more.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+        {/* End slate */}
+        <div
+          style={{ scrollSnapAlign: "center" }}
+          className="flex-shrink-0 w-[78vw] md:w-[44vw] flex items-center justify-center pr-6"
+        >
+          <div className="text-center max-w-md">
+            <p
+              className="text-[10px] tracking-[0.5em] uppercase mb-4"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              ✦ End of Reel
+            </p>
+            <h3
+              className="section-script"
+              style={{ fontSize: "clamp(40px, 5vw, 70px)" }}
+            >
+              Ready to be next?
+            </h3>
+            <p
+              className="mt-4 text-[14px]"
+              style={{ color: "var(--color-text-body)" }}
+            >
+              60+ brands and counting. The bench has room for one more.
+            </p>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function ArrowBtn({
+  dir,
+  onClick,
+}: {
+  dir: "left" | "right";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={dir === "left" ? "Previous project" : "Next project"}
+      onClick={onClick}
+      className="w-11 h-11 rounded-full flex items-center justify-center text-lg transition hover:scale-105"
+      style={{
+        background: "rgba(255,255,255,0.7)",
+        border: "1px solid rgba(232,84,122,0.35)",
+        color: "#e8547a",
+        boxShadow: "0 8px 24px rgba(155,127,199,0.18)",
+      }}
+    >
+      {dir === "left" ? "←" : "→"}
+    </button>
   );
 }
 
