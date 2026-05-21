@@ -13,3 +13,14 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Reference/planning media (not part of codebase)
+*.mp4
+*.mov
+ColouR palate.jpeg
+Testimonial reference..jpeg
+WhatsApp Image*
+WhatsApp Video*
+Gemini_Generated_Image*
+Copy of the Garima effect.pdf
