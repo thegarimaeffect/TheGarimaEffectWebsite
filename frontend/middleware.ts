@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { previewRoleFromRequest } from "@/lib/supabase/preview";
+import { previewRoleFromRequest } from "@/lib/supabase/preview-edge";
 import type { UserRole } from "@/lib/supabase/database.types";
 
 const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/preview"];
