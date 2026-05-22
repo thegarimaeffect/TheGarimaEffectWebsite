@@ -383,3 +383,62 @@ html.lenis body {
   background-clip: text;
   color: transparent;
 }
+
+/* ───────────── SEO subpage styles ───────────── */
+.subpage-nav-link {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #3d1a4d;
+  transition: color 0.2s;
+}
+.subpage-nav-link:hover { color: #e8547a; }
+
+.footer-link {
+  color: #5a3a6e;
+  transition: color 0.2s;
+}
+.footer-link:hover { color: #e8547a; }
+
+.prose-content h2 {
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  color: #3d1a4d;
+  margin: 40px 0 14px;
+  line-height: 1.2;
+}
+.prose-content h3 {
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 700;
+  color: #3d1a4d;
+  margin: 30px 0 10px;
+}
+.prose-content p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #4a2e5f;
+  margin: 0 0 16px;
+}
+.prose-content ul {
+  margin: 0 0 20px;
+  padding-left: 22px;
+  list-style: none;
+}
+.prose-content ul li {
+  position: relative;
+  padding-left: 4px;
+  margin-bottom: 8px;
+  color: #4a2e5f;
+  line-height: 1.7;
+}
+.prose-content ul li::before {
+  content: "✦";
+  position: absolute;
+  left: -18px;
+  top: 0;
+  color: #e8547a;
+  font-size: 12px;
+}
+.prose-content a { color: #e8547a; text-decoration: underline; text-underline-offset: 3px; }
+.prose-content strong { color: #3d1a4d; font-weight: 700; }
