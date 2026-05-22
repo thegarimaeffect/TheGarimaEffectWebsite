@@ -3,7 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { previewRoleFromRequest } from "@/lib/supabase/preview-edge";
 import type { UserRole } from "@/lib/supabase/database.types";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/preview"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/preview", "/robots.txt", "/sitemap.xml", "/llms.txt", "/favicon.ico"];
 const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
   product_manager: "/pm",
