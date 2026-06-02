@@ -11,13 +11,6 @@ const CAST = [
   "VIDEO SCRIPTS",
 ];
 
-const STATS = [
-  { num: "4+",     label: "Years crafting" },
-  { num: "60+",    label: "Brands transformed" },
-  { num: "120M+",  label: "Combined views" },
-  { num: "₹3.4Cr+", label: "Revenue moved" },
-];
-
 export default function Hero() {
   const ref = useRef<HTMLElement>(null);
 
@@ -88,72 +81,17 @@ export default function Hero() {
           ✦ From concept to content ✦
         </motion.p>
 
-        {/* THE 3D ROPE ANIMATION */}
-        <div className="w-full max-w-[760px] mx-auto">
+        {/* THE 3D ROPE ANIMATION — full focus, no stats below */}
+        <div className="w-full max-w-[900px] mx-auto">
           <RopeReveal />
         </div>
-
-        {/* Short story below the animation */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 5.4, duration: 0.9 }}
-          className="text-center max-w-xl mt-2 md:mt-4 italic leading-relaxed text-[14px] md:text-[16px]"
-          style={{ color: "var(--color-text-body)" }}
-        >
-          Tangled brand chaos, untangled into a story people remember —
-          four years of voice, taste, and relentless craft.
-        </motion.p>
-
-        {/* 4 STATS — moved here from About */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 6.0, duration: 0.9 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mt-10 md:mt-12 w-full max-w-[920px]"
-          style={{ perspective: 900 }}
-        >
-          {STATS.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 40, rotateX: -20 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              whileHover={{ y: -8, rotateX: 6, scale: 1.04 }}
-              transition={{ delay: 6.2 + i * 0.12, type: "spring", damping: 16 }}
-              className="stat-tile"
-              style={{
-                transform: `translateZ(${20 + i * 10}px)`,
-                transformStyle: "preserve-3d",
-              }}
-            >
-              <p
-                className="stat-num"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--color-accent-rose) 0%, var(--color-accent-lavender) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {s.num}
-              </p>
-              <p
-                className="text-[10px] md:text-[11px] tracking-[0.3em] uppercase font-semibold mt-2"
-                style={{ color: "var(--color-text-muted)" }}
-              >
-                {s.label}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
       </div>
 
       {/* SCROLL HINT */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 7.4, duration: 0.8 }}
+        transition={{ delay: 4.0, duration: 0.8 }}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none"
       >
         <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: "var(--color-text-muted)" }}>
