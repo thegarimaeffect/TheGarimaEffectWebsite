@@ -442,3 +442,66 @@ html.lenis body {
 }
 .prose-content a { color: #e8547a; text-decoration: underline; text-underline-offset: 3px; }
 .prose-content strong { color: #3d1a4d; font-weight: 700; }
+
+/* ─────────── Rope reveal 3D animation ─────────── */
+.rope-stage {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.rope-svg {
+  transform-style: preserve-3d;
+}
+.rope-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(232,84,122,0.35) 0%,
+      rgba(184,156,224,0.18) 35%,
+      transparent 70%);
+  filter: blur(20px);
+  transform: translateZ(-40px);
+  z-index: 0;
+}
+.rope-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.rope-particle {
+  position: absolute;
+  border-radius: 999px;
+  will-change: transform, opacity;
+}
+
+/* ─────────── Hero stat tiles (3D positive Z) ─────────── */
+.stat-tile {
+  position: relative;
+  padding: 22px 18px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(232, 84, 122, 0.22);
+  border-radius: 22px;
+  box-shadow:
+    0 12px 32px rgba(155, 127, 199, 0.18),
+    0 2px 8px rgba(232, 84, 122, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  transition: box-shadow 0.4s ease;
+  will-change: transform;
+}
+.stat-tile:hover {
+  box-shadow:
+    0 22px 48px rgba(155, 127, 199, 0.32),
+    0 4px 14px rgba(232, 84, 122, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.stat-num {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}

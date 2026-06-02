@@ -4,13 +4,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useRef } from "react";
 
-const STATS = [
-  { num: "4+", label: "Years crafting" },
-  { num: "60+", label: "Brands transformed" },
-  { num: "120M+", label: "Combined views" },
-  { num: "₹3.4Cr+", label: "Revenue moved" },
-];
-
 const PILLARS = [
   {
     icon: "✦",
@@ -94,13 +87,13 @@ export default function About() {
             style={{ background: "transparent" }}
           >
             <Image
-              src="/garima-studio.png"
-              alt="Garima Rana"
+              src="/garima.png"
+              alt="Garima Rana, founder of The Garima Effect"
               fill
               sizes="(max-width: 1024px) 100vw, 40vw"
               style={{
                 objectFit: "contain",
-                objectPosition: "center center",
+                objectPosition: "bottom center",
               }}
             />
             {/* Glass overlay corner badge */}
@@ -231,43 +224,9 @@ export default function About() {
         </div>
       </div>
 
-      {/* STATS STRIP */}
+      {/* PILLARS (stats moved up into the Hero — keep the three principles here) */}
       <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 pb-24">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.8 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6"
-        >
-          {STATS.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              whileHover={{ y: -6, scale: 1.03 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, type: "spring", damping: 16 }}
-              className="glass p-6 md:p-8 text-center"
-            >
-              <p
-                className="text-4xl md:text-5xl font-black text-gradient-rose"
-                style={{ lineHeight: 1 }}
-              >
-                {s.num}
-              </p>
-              <p
-                className="mt-3 text-[10px] md:text-[11px] tracking-[0.3em] uppercase font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
-              >
-                {s.label}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* PILLARS */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {PILLARS.map((p, i) => (
             <motion.div
               key={p.title}
