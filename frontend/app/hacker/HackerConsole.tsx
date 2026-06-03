@@ -119,6 +119,8 @@ export default function HackerConsole({
   }, [entries]);
 
   // ── Mutations ──
+  const [err, setErr] = useState<string | null>(null);
+
   const addGoal = useCallback(
     async (name: string) => {
       if (!name.trim()) return;
@@ -129,7 +131,15 @@ export default function HackerConsole({
         .insert({ name: name.trim(), color, position })
         .select()
         .single();
-      if (!error && data) setGoals((g) => [...g, data as Goal]);
+      if (error) {
+        setErr(`Failed to add goal: ${error.message}`);
+        console.error("[hacker] addGoal", error);
+        return;
+      }
+      if (data) {
+        setErr(null);
+        setGoals((g) => [...g, data as Goal]);
+      }
     },
     [goals.length, supabase]
   );
@@ -178,14 +188,26 @@ export default function HackerConsole({
       });
 
       if (hours <= 0) {
-        await supabase.from("hacker_entries").delete().eq("goal_id", goalId).eq("entry_date", date);
+        const { error } = await supabase
+          .from("hacker_entries")
+          .delete()
+          .eq("goal_id", goalId)
+          .eq("entry_date", date);
+        if (error) {
+          setErr(`Failed to clear cell: ${error.message}`);
+          console.error("[hacker] deleteEntry", error);
+        }
       } else {
-        await supabase
+        const { error } = await supabase
           .from("hacker_entries")
           .upsert(
             { goal_id: goalId, entry_date: date, hours },
             { onConflict: "user_id,goal_id,entry_date" }
           );
+        if (error) {
+          setErr(`Failed to save hours: ${error.message}`);
+          console.error("[hacker] upsertEntry", error);
+        }
       }
     },
     [supabase]
@@ -206,6 +228,19 @@ export default function HackerConsole({
 
       <main className="hk-main">
         <AddGoalBar onAdd={addGoal} count={goals.length} />
+
+        {err && (
+          <div className="hk-err">
+            <span className="hk-mono">!</span> {err}
+            <button onClick={() => setErr(null)} className="hk-x" style={{ opacity: 1, marginLeft: "auto" }}>×</button>
+          </div>
+        )}
+
+        {goals.length > 0 && (
+          <div className="hk-howto hk-mono hk-dim">
+            ↓ <strong style={{ color: "#00ff9c" }}>burn hours:</strong> click any cell in TODAY's row, type a number (e.g. 2.5), then press Enter or Tab. cells turn green as you log time. the Σ column and chart update instantly.
+          </div>
+        )}
 
         <div className="hk-grid-wrap">
           <SpreadsheetGrid
@@ -557,6 +592,26 @@ function Styles() {
         font-family: ui-monospace, monospace;
       }
       .hk-input::placeholder { color: ${C.textDim}; }
+
+      /* ERROR BANNER */
+      .hk-err {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px;
+        background: rgba(255, 91, 108, 0.08);
+        border: 1px solid rgba(255, 91, 108, 0.4);
+        color: ${C.red};
+        border-radius: 12px;
+        font-family: ui-monospace, monospace;
+        font-size: 13px;
+      }
+
+      /* HOW-TO HINT */
+      .hk-howto {
+        font-size: 12px;
+        padding: 4px 4px 0;
+        line-height: 1.6;
+      }
+      .hk-howto strong { font-weight: 700; letter-spacing: 0.05em; }
 
       /* CARDS */
       .hk-card {
