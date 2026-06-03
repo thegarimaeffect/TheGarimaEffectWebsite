@@ -69,20 +69,20 @@ export default function Hero() {
         </p>
       </motion.div>
 
-      {/* MAIN STAGE — the 3D rope reveal animation */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-40 md:pt-44 pb-28 px-6">
+      {/* MAIN STAGE — full-width cinematic loop */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-40 md:pt-44 pb-28">
         <motion.p
           initial={{ opacity: 0, letterSpacing: "0.2em" }}
           animate={{ opacity: 1, letterSpacing: "0.5em" }}
           transition={{ delay: 0.6, duration: 0.9 }}
-          className="text-[11px] md:text-[12px] tracking-[0.5em] uppercase font-bold mb-2"
+          className="text-[11px] md:text-[12px] tracking-[0.5em] uppercase font-bold mb-2 px-6"
           style={{ color: "var(--color-accent-rose)" }}
         >
           ✦ From concept to content ✦
         </motion.p>
 
-        {/* THE 3D ROPE ANIMATION — full focus, no stats below */}
-        <div className="w-full max-w-[900px] mx-auto">
+        {/* full-bleed — no max-width, no padding, video edges dissolve into bg */}
+        <div className="w-full">
           <RopeReveal />
         </div>
       </div>

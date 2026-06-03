@@ -506,35 +506,32 @@ html.lenis body {
   letter-spacing: -0.02em;
 }
 
-/* ─────────── Hero video integration ─────────── */
+/* ─────────── Hero video integration — full-bleed, no framing ─────────── */
 .video-halo {
   position: absolute;
-  inset: -8% -4% -8% -4%;
+  inset: -14% -10% -14% -10%;
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 60% 55% at 50% 50%,
+    radial-gradient(ellipse 70% 60% at 50% 50%,
       rgba(232, 84, 122, 0.42) 0%,
       rgba(184, 156, 224, 0.28) 35%,
       rgba(245, 200, 66, 0.10) 60%,
-      transparent 80%);
-  filter: blur(38px);
+      transparent 82%);
+  filter: blur(48px);
   transform: translateZ(-60px);
 }
 
 .video-wrap {
   position: relative;
   width: 100%;
-  max-width: 1080px;
+  max-width: 100%;
   margin: 0 auto;
   aspect-ratio: 16 / 9;
   z-index: 2;
-  border-radius: 38px;
   isolation: isolate;
-  /* Strong layered drop-shadow for the "real object" feel */
-  filter:
-    drop-shadow(0 40px 80px rgba(232, 84, 122, 0.30))
-    drop-shadow(0 12px 32px rgba(184, 156, 224, 0.22));
+  /* No rounded corners — full-bleed banner feel */
+  border-radius: 0;
 }
 
 .video-el {
@@ -543,48 +540,48 @@ html.lenis body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 38px;
-  /* Feathered radial mask — bleeds into page background */
+  border-radius: 0;
+  /* Heavy feather — only the centre 50% is fully opaque, edges dissolve */
   -webkit-mask-image: radial-gradient(
-    ellipse 78% 90% at 50% 50%,
-    #000 55%,
-    rgba(0, 0, 0, 0.85) 72%,
+    ellipse 65% 75% at 50% 50%,
+    #000 35%,
+    rgba(0, 0, 0, 0.85) 60%,
+    rgba(0, 0, 0, 0.35) 85%,
     rgba(0, 0, 0, 0.0) 100%
   );
   mask-image: radial-gradient(
-    ellipse 78% 90% at 50% 50%,
-    #000 55%,
-    rgba(0, 0, 0, 0.85) 72%,
+    ellipse 65% 75% at 50% 50%,
+    #000 35%,
+    rgba(0, 0, 0, 0.85) 60%,
+    rgba(0, 0, 0, 0.35) 85%,
     rgba(0, 0, 0, 0.0) 100%
   );
 }
 
-/* Subtle inner ring — frames without enclosing */
+/* No ring — pretend the video doesn't have edges */
 .video-ring {
-  position: absolute;
-  inset: 2%;
-  border-radius: 34px;
-  border: 1px solid rgba(232, 84, 122, 0.16);
-  box-shadow:
-    inset 0 0 60px rgba(232, 84, 122, 0.12),
-    inset 0 0 14px rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-  z-index: 1;
+  display: none;
 }
 
-/* Top-and-bottom soft gradient to blend with page bg */
+/* Stronger lighten blend with the page gradient at top + bottom */
 .video-blend {
   position: absolute;
   inset: 0;
-  border-radius: 38px;
   pointer-events: none;
   z-index: 2;
   background:
     linear-gradient(180deg,
-      rgba(255, 244, 245, 0.45) 0%,
-      transparent 14%,
-      transparent 86%,
-      rgba(234, 216, 245, 0.45) 100%);
+      rgba(255, 244, 245, 0.70) 0%,
+      rgba(255, 244, 245, 0.15) 12%,
+      transparent 25%,
+      transparent 75%,
+      rgba(234, 216, 245, 0.20) 88%,
+      rgba(234, 216, 245, 0.75) 100%),
+    linear-gradient(90deg,
+      rgba(255, 244, 245, 0.55) 0%,
+      transparent 8%,
+      transparent 92%,
+      rgba(234, 216, 245, 0.55) 100%);
   mix-blend-mode: lighten;
 }
 
