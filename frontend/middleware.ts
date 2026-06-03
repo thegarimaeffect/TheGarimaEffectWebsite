@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest) {
     PUBLIC_PATHS.some(
       (p) => path === p || path.startsWith(`${p}/`) || path.startsWith("/_next") || path.startsWith("/api")
     ) ||
-    /\.(png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2?)$/i.test(path);
+    /\.(png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2?|mp4|webm|mov|ogg|m4a|mp3)$/i.test(path);
 
   // Not logged in → only public allowed
   if (!user) {
@@ -127,6 +127,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Run on everything except static files
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2?)).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2?|mp4|webm|mov|ogg|m4a|mp3)).*)",
   ],
 };
