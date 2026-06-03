@@ -1,45 +1,55 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────
-type Task = {
+type Goal = {
   id: string;
   user_id: string;
-  title: string;
-  description: string | null;
-  status: "todo" | "in_progress" | "done";
-  priority: "low" | "normal" | "high" | "critical";
-  category: string | null;
-  due_date: string | null;
-  estimated_hours: number | null;
+  name: string;
+  color: string | null;
   position: number;
+  target_hours: number | null;
   created_at: string;
-  completed_at: string | null;
+  archived_at: string | null;
 };
 
-type DailyHours = { user_id: string; log_date: string; hours: number };
-type Today = { done_today: number; open_count: number; hours_today: number };
+type Entry = {
+  id: string;
+  user_id: string;
+  goal_id: string;
+  entry_date: string; // YYYY-MM-DD
+  hours: number;
+  note: string | null;
+};
+
+type DailyTotal = {
+  user_id: string;
+  entry_date: string;
+  total_hours: number;
+  goals_touched: number;
+};
 
 type Props = {
   userEmail: string;
-  initialTasks: Task[];
-  initialDaily: DailyHours[];
-  initialToday: Today;
+  initialGoals: Goal[];
+  initialEntries: Entry[];
+  initialTotals: DailyTotal[];
+  daysBack: number;
 };
 
-// ──────────────────────────────────────────────────────────────────────────
-// Aesthetic — terminal/hacker dark theme, isolated from brand
 // ──────────────────────────────────────────────────────────────────────────
 const C = {
   bg: "#070a14",
   surface: "#0d1322",
   surface2: "#131a2e",
+  surface3: "#1a2340",
   border: "#1f2942",
+  borderHi: "#2c3a5e",
   text: "#e6edf3",
   textDim: "#8b96b3",
   green: "#00ff9c",
@@ -49,67 +59,167 @@ const C = {
   purple: "#bd93f9",
 };
 
-const PRIORITY_COLOR: Record<Task["priority"], string> = {
-  low: C.textDim,
-  normal: C.cyan,
-  high: C.amber,
-  critical: C.red,
-};
+const PRESET_COLORS = [C.green, C.cyan, C.amber, C.purple, C.red, "#ff79c6", "#50fa7b", "#f1fa8c"];
 
 // ──────────────────────────────────────────────────────────────────────────
-// Component
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function buildDayList(daysBack: number): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < daysBack; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+function fmtDateRow(iso: string): { line1: string; line2: string; isToday: boolean; isWeekend: boolean } {
+  const d = new Date(iso + "T00:00:00");
+  const today = todayIso();
+  const isToday = iso === today;
+  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+  const day = d.toLocaleDateString("en-GB", { weekday: "short" }).toUpperCase();
+  const date = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return { line1: isToday ? "TODAY" : day, line2: date, isToday, isWeekend };
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 export default function HackerConsole({
   userEmail,
-  initialTasks,
-  initialDaily,
-  initialToday,
+  initialGoals,
+  initialEntries,
+  initialTotals,
+  daysBack,
 }: Props) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [daily, setDaily] = useState<DailyHours[]>(initialDaily);
-  const [today, setToday] = useState<Today>(initialToday);
-  const [, startTransition] = useTransition();
+  const [goals, setGoals] = useState<Goal[]>(initialGoals);
+  const [entries, setEntries] = useState<Entry[]>(initialEntries);
 
-  const refresh = useCallback(async () => {
-    const [t, d, td] = await Promise.all([
-      supabase.from("hacker_tasks").select("*").order("position").order("created_at", { ascending: false }),
-      supabase.from("hacker_daily_hours").select("*"),
-      supabase.from("hacker_today").select("*").single(),
-    ]);
-    if (t.data) setTasks(t.data as Task[]);
-    if (d.data) setDaily(d.data as DailyHours[]);
-    if (td.data) setToday(td.data as Today);
-  }, [supabase]);
+  const dayList = useMemo(() => buildDayList(daysBack), [daysBack]);
+
+  // Map (goal_id|date) → hours for O(1) lookup
+  const entryMap = useMemo(() => {
+    const m = new Map<string, number>();
+    entries.forEach((e) => m.set(`${e.goal_id}|${e.entry_date}`, Number(e.hours)));
+    return m;
+  }, [entries]);
+
+  // Daily totals (recomputed locally for instant feedback)
+  const dailyTotals = useMemo(() => {
+    const m = new Map<string, number>();
+    entries.forEach((e) => {
+      const v = m.get(e.entry_date) || 0;
+      m.set(e.entry_date, v + Number(e.hours));
+    });
+    return m;
+  }, [entries]);
+
+  // ── Mutations ──
+  const addGoal = useCallback(
+    async (name: string) => {
+      if (!name.trim()) return;
+      const color = PRESET_COLORS[goals.length % PRESET_COLORS.length];
+      const position = goals.length;
+      const { data, error } = await supabase
+        .from("hacker_goals")
+        .insert({ name: name.trim(), color, position })
+        .select()
+        .single();
+      if (!error && data) setGoals((g) => [...g, data as Goal]);
+    },
+    [goals.length, supabase]
+  );
+
+  const renameGoal = useCallback(
+    async (id: string, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const { error } = await supabase.from("hacker_goals").update({ name: trimmed }).eq("id", id);
+      if (!error) setGoals((g) => g.map((x) => (x.id === id ? { ...x, name: trimmed } : x)));
+    },
+    [supabase]
+  );
+
+  const archiveGoal = useCallback(
+    async (id: string) => {
+      if (!confirm("Archive this goal? Past entries are kept.")) return;
+      const { error } = await supabase
+        .from("hacker_goals")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", id);
+      if (!error) setGoals((g) => g.filter((x) => x.id !== id));
+    },
+    [supabase]
+  );
+
+  const setCell = useCallback(
+    async (goalId: string, date: string, hours: number) => {
+      // Optimistic local update
+      const key = `${goalId}|${date}`;
+      setEntries((prev) => {
+        const idx = prev.findIndex((e) => e.goal_id === goalId && e.entry_date === date);
+        if (hours <= 0) {
+          // delete entry
+          return idx >= 0 ? prev.filter((_, i) => i !== idx) : prev;
+        }
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = { ...next[idx], hours };
+          return next;
+        }
+        return [
+          ...prev,
+          { id: `tmp-${Date.now()}`, user_id: "", goal_id: goalId, entry_date: date, hours, note: null },
+        ];
+      });
+
+      if (hours <= 0) {
+        await supabase.from("hacker_entries").delete().eq("goal_id", goalId).eq("entry_date", date);
+      } else {
+        await supabase
+          .from("hacker_entries")
+          .upsert(
+            { goal_id: goalId, entry_date: date, hours },
+            { onConflict: "user_id,goal_id,entry_date" }
+          );
+      }
+    },
+    [supabase]
+  );
 
   const signOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
+  // ── Derived for the chart ──
+  const chartDays = dayList.slice(0, 14).reverse(); // 14 days, oldest left
+  const chartMax = Math.max(...chartDays.map((d) => dailyTotals.get(d) || 0), 4);
+
   return (
     <div className="hk-root" style={{ background: C.bg, color: C.text, minHeight: "100vh" }}>
       <TopBar userEmail={userEmail} onSignOut={signOut} />
 
       <main className="hk-main">
-        {/* Left: tasks (wide) */}
-        <section className="hk-col-wide">
-          <AddTask onAdded={refresh} supabase={supabase} />
-          <TasksList
-            tasks={tasks}
-            onChanged={refresh}
-            supabase={supabase}
-            startTransition={startTransition}
-          />
-        </section>
+        <AddGoalBar onAdd={addGoal} count={goals.length} />
 
-        {/* Right: calendar + today stats + chart (narrow) */}
-        <section className="hk-col-narrow">
-          <TodayCard today={today} />
-          <Calendar daily={daily} />
-          <HoursChart daily={daily} />
-        </section>
+        <div className="hk-grid-wrap">
+          <SpreadsheetGrid
+            days={dayList}
+            goals={goals}
+            entryMap={entryMap}
+            dailyTotals={dailyTotals}
+            onCellChange={setCell}
+            onRenameGoal={renameGoal}
+            onArchiveGoal={archiveGoal}
+          />
+        </div>
+
+        <ChartCard days={chartDays} dailyTotals={dailyTotals} max={chartMax} />
       </main>
 
       <Styles />
@@ -127,8 +237,8 @@ function TopBar({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => 
     <header className="hk-topbar">
       <div className="hk-brand">
         <span className="hk-blip" /> <span className="hk-mono hk-up">HACKER CONSOLE</span>
-        <span className="hk-divider">/</span>
-        <span className="hk-mono hk-dim">{dateStr}</span>
+        <span className="hk-divider hk-hide-sm">/</span>
+        <span className="hk-mono hk-dim hk-hide-sm">{dateStr}</span>
       </div>
       <div className="hk-user">
         <span className="hk-mono hk-dim hk-hide-sm">{userEmail}</span>
@@ -139,279 +249,256 @@ function TopBar({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => 
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-function AddTask({
-  onAdded,
-  supabase,
-}: {
-  onAdded: () => void;
-  supabase: ReturnType<typeof createClient>;
-}) {
-  const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState<Task["priority"]>("normal");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
+function AddGoalBar({ onAdd, count }: { onAdd: (name: string) => void; count: number }) {
+  const [value, setValue] = useState("");
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    setBusy(true);
-    await supabase.from("hacker_tasks").insert({
-      title: title.trim(),
-      priority,
-      status: "todo",
-    });
-    setTitle("");
-    setBusy(false);
-    onAdded();
+    if (!value.trim()) return;
+    onAdd(value);
+    setValue("");
   };
-
   return (
     <form onSubmit={submit} className="hk-add">
       <span className="hk-prompt">$</span>
       <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="add a task and press enter…"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder={count === 0 ? "add your first goal — e.g. LeetCode, DSA, Reading…" : "add another goal…"}
         className="hk-input"
-        autoFocus
+        autoFocus={count === 0}
       />
-      <select
-        value={priority}
-        onChange={(e) => setPriority(e.target.value as Task["priority"])}
-        className="hk-select"
-      >
-        <option value="low">low</option>
-        <option value="normal">normal</option>
-        <option value="high">high</option>
-        <option value="critical">critical</option>
-      </select>
-      <button type="submit" disabled={busy} className="hk-btn hk-btn-primary">
-        {busy ? "…" : "add"}
+      <button type="submit" className="hk-btn hk-btn-primary" disabled={!value.trim()}>
+        + add goal
       </button>
     </form>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-function TasksList({
-  tasks,
-  onChanged,
-  supabase,
-  startTransition,
+function SpreadsheetGrid({
+  days,
+  goals,
+  entryMap,
+  dailyTotals,
+  onCellChange,
+  onRenameGoal,
+  onArchiveGoal,
 }: {
-  tasks: Task[];
-  onChanged: () => void;
-  supabase: ReturnType<typeof createClient>;
-  startTransition: React.TransitionStartFunction;
+  days: string[];
+  goals: Goal[];
+  entryMap: Map<string, number>;
+  dailyTotals: Map<string, number>;
+  onCellChange: (goalId: string, date: string, hours: number) => void;
+  onRenameGoal: (id: string, name: string) => void;
+  onArchiveGoal: (id: string) => void;
 }) {
-  const [filter, setFilter] = useState<"open" | "today" | "all" | "done">("open");
+  if (goals.length === 0) {
+    return (
+      <div className="hk-card hk-empty-state">
+        <p className="hk-mono hk-dim">
+          ↑ start by adding a goal (LeetCode, DSA, Workout, Reading…)
+        </p>
+        <p className="hk-mono hk-dim" style={{ fontSize: 11, marginTop: 6 }}>
+          each goal becomes a column. each day a row. hours go in the cells.
+        </p>
+      </div>
+    );
+  }
 
-  const visible = useMemo(() => {
-    if (filter === "open") return tasks.filter((t) => t.status !== "done");
-    if (filter === "done") return tasks.filter((t) => t.status === "done");
-    if (filter === "today") {
-      const today = new Date().toISOString().slice(0, 10);
-      return tasks.filter((t) =>
-        t.status !== "done" && (t.due_date === today || t.due_date === null)
-      );
-    }
-    return tasks;
-  }, [tasks, filter]);
+  return (
+    <div className="hk-card hk-grid-card">
+      <div className="hk-table-scroll">
+        <table className="hk-table">
+          <thead>
+            <tr>
+              <th className="hk-th-date">date</th>
+              {goals.map((g) => (
+                <th key={g.id} className="hk-th-goal">
+                  <GoalHeader
+                    goal={g}
+                    onRename={(name) => onRenameGoal(g.id, name)}
+                    onArchive={() => onArchiveGoal(g.id)}
+                  />
+                </th>
+              ))}
+              <th className="hk-th-total">Σ total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((date) => {
+              const meta = fmtDateRow(date);
+              const total = dailyTotals.get(date) || 0;
+              return (
+                <tr
+                  key={date}
+                  className={
+                    "hk-row" +
+                    (meta.isToday ? " is-today" : "") +
+                    (meta.isWeekend ? " is-weekend" : "")
+                  }
+                >
+                  <th className="hk-td-date">
+                    <span className="hk-mono hk-dow">{meta.line1}</span>
+                    <span className="hk-mono hk-dim hk-date">{meta.line2}</span>
+                  </th>
+                  {goals.map((g) => (
+                    <td key={g.id} className="hk-td-cell">
+                      <Cell
+                        value={entryMap.get(`${g.id}|${date}`)}
+                        color={g.color || C.green}
+                        onChange={(h) => onCellChange(g.id, date, h)}
+                      />
+                    </td>
+                  ))}
+                  <td className="hk-td-total">
+                    <span className="hk-mono" style={{ color: total > 0 ? C.green : C.textDim }}>
+                      {total > 0 ? total.toFixed(1) : "—"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
-  const cycleStatus = async (t: Task) => {
-    const next: Task["status"] =
-      t.status === "todo" ? "in_progress" :
-      t.status === "in_progress" ? "done" : "todo";
-    startTransition(async () => {
-      await supabase.from("hacker_tasks").update({ status: next }).eq("id", t.id);
-      onChanged();
-    });
-  };
+// ──────────────────────────────────────────────────────────────────────────
+function GoalHeader({
+  goal,
+  onRename,
+  onArchive,
+}: {
+  goal: Goal;
+  onRename: (n: string) => void;
+  onArchive: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(goal.name);
 
-  const remove = async (id: string) => {
-    if (!confirm("Delete this task?")) return;
-    await supabase.from("hacker_tasks").delete().eq("id", id);
-    onChanged();
-  };
-
-  const logTime = async (t: Task) => {
-    const raw = prompt(`Log hours for "${t.title}"\n(e.g. 0.5, 1.25, 3)`);
-    if (!raw) return;
-    const h = parseFloat(raw);
-    if (!h || h <= 0 || h > 24) return alert("Enter a number between 0 and 24");
-    const note = prompt("Optional note") || null;
-    await supabase.from("hacker_time_logs").insert({ task_id: t.id, hours: h, note });
-    onChanged();
+  const save = () => {
+    if (value.trim() && value.trim() !== goal.name) onRename(value);
+    setEditing(false);
   };
 
   return (
+    <div className="hk-goal-head">
+      <span className="hk-goal-dot" style={{ background: goal.color || C.green }} />
+      {editing ? (
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { setValue(goal.name); setEditing(false); } }}
+          className="hk-goal-edit"
+          autoFocus
+        />
+      ) : (
+        <span className="hk-goal-name" onDoubleClick={() => setEditing(true)} title="double-click to rename">
+          {goal.name}
+        </span>
+      )}
+      <button onClick={onArchive} className="hk-x" title="archive goal" aria-label="archive">×</button>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+function Cell({
+  value,
+  color,
+  onChange,
+}: {
+  value: number | undefined;
+  color: string;
+  onChange: (h: number) => void;
+}) {
+  const [draft, setDraft] = useState<string>(value && value > 0 ? String(value) : "");
+  // sync external value
+  useMemo(() => { setDraft(value && value > 0 ? String(value) : ""); /* eslint-disable-next-line */ }, [value]);
+
+  const commit = () => {
+    if (draft === "") {
+      if (value && value > 0) onChange(0);
+      return;
+    }
+    const n = parseFloat(draft);
+    if (Number.isNaN(n) || n < 0 || n > 24) {
+      setDraft(value && value > 0 ? String(value) : "");
+      return;
+    }
+    if (n !== value) onChange(n);
+  };
+
+  const intensity = value && value > 0 ? Math.min(1, value / 6) : 0;
+  return (
+    <input
+      value={draft}
+      onChange={(e) => setDraft(e.target.value.replace(/[^0-9.]/g, ""))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        if (e.key === "Escape") {
+          setDraft(value && value > 0 ? String(value) : "");
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      inputMode="decimal"
+      placeholder="—"
+      className="hk-cell"
+      style={{
+        background: intensity > 0 ? `rgba(0,255,156,${0.08 + intensity * 0.18})` : "transparent",
+        color: intensity > 0 ? color : C.textDim,
+        borderColor: intensity > 0 ? `${color}55` : "transparent",
+      }}
+    />
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+function ChartCard({
+  days,
+  dailyTotals,
+  max,
+}: {
+  days: string[];
+  dailyTotals: Map<string, number>;
+  max: number;
+}) {
+  const total = days.reduce((acc, d) => acc + (dailyTotals.get(d) || 0), 0);
+  const avg = total / days.length;
+  return (
     <div className="hk-card">
       <div className="hk-card-head">
-        <h2 className="hk-mono hk-h">tasks</h2>
-        <div className="hk-tabs">
-          {(["open", "today", "done", "all"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`hk-tab ${filter === f ? "is-active" : ""}`}
-            >
-              {f}
-              {f === "open" && (
-                <span className="hk-tab-count">{tasks.filter(t=>t.status!=="done").length}</span>
-              )}
-            </button>
-          ))}
+        <h3 className="hk-mono hk-h">daily total — last 14 days</h3>
+        <div className="hk-chart-meta hk-mono hk-dim">
+          <span>Σ {total.toFixed(1)}h</span>
+          <span style={{ marginLeft: 18 }}>avg {avg.toFixed(1)}h/day</span>
         </div>
       </div>
-
-      {visible.length === 0 && (
-        <p className="hk-empty hk-mono hk-dim">no tasks yet — add one above</p>
-      )}
-
-      <ul className="hk-tasks">
-        {visible.map((t) => (
-          <li key={t.id} className={`hk-task hk-task-${t.status}`}>
-            <button
-              onClick={() => cycleStatus(t)}
-              className={`hk-status hk-status-${t.status}`}
-              title="click to cycle status"
-            >
-              {t.status === "todo" && "◯"}
-              {t.status === "in_progress" && "◐"}
-              {t.status === "done" && "●"}
-            </button>
-
-            <span
-              className="hk-priority-dot"
-              style={{ background: PRIORITY_COLOR[t.priority] }}
-              title={t.priority}
-            />
-
-            <span className="hk-task-title">{t.title}</span>
-
-            {t.category && <span className="hk-tag">#{t.category}</span>}
-
-            <div className="hk-task-actions">
-              <button onClick={() => logTime(t)} className="hk-btn hk-btn-ghost hk-btn-sm" title="log time">
-                ⏱ log
-              </button>
-              <button onClick={() => remove(t.id)} className="hk-btn hk-btn-ghost hk-btn-sm" title="delete">
-                ✕
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-function TodayCard({ today }: { today: Today }) {
-  return (
-    <div className="hk-card">
-      <h3 className="hk-mono hk-h">today</h3>
-      <div className="hk-stat-row">
-        <Stat value={Number(today.hours_today || 0).toFixed(1)} label="hours logged" accent={C.green} />
-        <Stat value={String(today.done_today || 0)} label="done today" accent={C.cyan} />
-        <Stat value={String(today.open_count || 0)} label="open" accent={C.amber} />
-      </div>
-    </div>
-  );
-}
-
-function Stat({ value, label, accent }: { value: string; label: string; accent: string }) {
-  return (
-    <div className="hk-stat">
-      <div className="hk-stat-num hk-mono" style={{ color: accent }}>{value}</div>
-      <div className="hk-stat-label hk-mono hk-dim">{label}</div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-function Calendar({ daily }: { daily: DailyHours[] }) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-  const firstWeekday = (first.getDay() + 6) % 7; // make Monday=0
-  const days = last.getDate();
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstWeekday; i++) cells.push(null);
-  for (let i = 1; i <= days; i++) cells.push(i);
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const hoursByDate: Record<string, number> = {};
-  daily.forEach((d) => { hoursByDate[d.log_date] = Number(d.hours); });
-  const monthLabel = first.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-
-  return (
-    <div className="hk-card">
-      <h3 className="hk-mono hk-h">calendar — {monthLabel}</h3>
-      <div className="hk-cal-grid">
-        {["m","t","w","t","f","s","s"].map((d, i) => (
-          <div key={i} className="hk-cal-dow hk-mono hk-dim">{d}</div>
-        ))}
-        {cells.map((day, i) => {
-          if (!day) return <div key={i} className="hk-cal-cell hk-cal-empty" />;
-          const iso = new Date(year, month, day).toISOString().slice(0, 10);
-          const h = hoursByDate[iso] || 0;
-          const isToday = day === today.getDate();
-          return (
-            <div
-              key={i}
-              className={`hk-cal-cell ${isToday ? "is-today" : ""}`}
-              title={h ? `${h}h logged` : ""}
-            >
-              <span className="hk-cal-day hk-mono">{day}</span>
-              {h > 0 && <span className="hk-cal-dot" style={{ opacity: Math.min(1, h / 6) }} />}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-function HoursChart({ daily }: { daily: DailyHours[] }) {
-  // Build last 14 days
-  const days: { date: string; hours: number; label: string }[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    const found = daily.find((x) => x.log_date === iso);
-    days.push({
-      date: iso,
-      hours: found ? Number(found.hours) : 0,
-      label: d.toLocaleDateString("en-GB", { weekday: "short" })[0],
-    });
-  }
-  const max = Math.max(...days.map((d) => d.hours), 4);
-  const total = days.reduce((a, b) => a + b.hours, 0);
-
-  return (
-    <div className="hk-card">
-      <div className="hk-card-head">
-        <h3 className="hk-mono hk-h">hours — last 14d</h3>
-        <span className="hk-mono hk-dim">Σ {total.toFixed(1)}h</span>
-      </div>
       <div className="hk-bars">
-        {days.map((d, i) => {
-          const h = (d.hours / max) * 100;
-          const isToday = i === days.length - 1;
+        {days.map((iso, i) => {
+          const h = dailyTotals.get(iso) || 0;
+          const pct = (h / max) * 100;
+          const isToday = iso === todayIso();
+          const d = new Date(iso + "T00:00:00");
           return (
-            <div key={d.date} className="hk-bar-col" title={`${d.date}: ${d.hours}h`}>
+            <div key={iso} className="hk-bar-col" title={`${iso}: ${h.toFixed(1)}h`}>
+              <div className="hk-bar-val hk-mono hk-dim">{h > 0 ? h.toFixed(1) : ""}</div>
               <div
                 className="hk-bar"
                 style={{
-                  height: `${Math.max(2, h)}%`,
+                  height: `${Math.max(2, pct)}%`,
                   background: isToday ? C.green : C.cyan,
-                  opacity: d.hours === 0 ? 0.2 : 0.9,
+                  opacity: h === 0 ? 0.15 : 0.9,
+                  boxShadow: isToday && h > 0 ? `0 0 12px ${C.green}80` : undefined,
                 }}
               />
-              <span className="hk-bar-label hk-mono hk-dim">{d.label}</span>
+              <span className="hk-bar-label hk-mono hk-dim">
+                {d.toLocaleDateString("en-GB", { weekday: "short" })[0]}
+              </span>
             </div>
           );
         })}
@@ -424,19 +511,16 @@ function HoursChart({ daily }: { daily: DailyHours[] }) {
 function Styles() {
   return (
     <style jsx global>{`
-      .hk-root {
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      }
+      .hk-root { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
       .hk-mono { font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Consolas", monospace; }
       .hk-up { text-transform: uppercase; letter-spacing: 0.2em; font-size: 12px; font-weight: 700; }
       .hk-dim { color: ${C.textDim}; }
       .hk-hide-sm { display: none; }
-      @media (min-width: 640px) { .hk-hide-sm { display: inline; } }
+      @media (min-width: 768px) { .hk-hide-sm { display: inline; } }
 
-      /* TOP BAR */
       .hk-topbar {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 18px 28px;
+        padding: 16px 24px;
         border-bottom: 1px solid ${C.border};
         background: rgba(13,19,34,0.85); backdrop-filter: blur(10px);
         position: sticky; top: 0; z-index: 10;
@@ -451,65 +535,51 @@ function Styles() {
       .hk-divider { color: ${C.border}; }
       .hk-user { display: flex; align-items: center; gap: 14px; }
 
-      /* MAIN GRID */
       .hk-main {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 18px;
-        padding: 26px 22px;
-        max-width: 1400px;
+        max-width: 1500px;
         margin: 0 auto;
-      }
-      @media (min-width: 960px) {
-        .hk-main { grid-template-columns: 1.6fr 1fr; padding: 32px; gap: 24px; }
-      }
-      .hk-col-wide, .hk-col-narrow {
-        display: flex; flex-direction: column; gap: 18px;
+        padding: 24px;
+        display: flex; flex-direction: column; gap: 20px;
       }
 
-      /* CARD */
+      /* ADD GOAL BAR */
+      .hk-add {
+        display: flex; align-items: center; gap: 10px;
+        background: ${C.surface};
+        border: 1px solid ${C.border};
+        border-radius: 14px;
+        padding: 14px 18px;
+      }
+      .hk-prompt { color: ${C.green}; font-family: ui-monospace, monospace; font-size: 18px; }
+      .hk-input {
+        flex: 1; background: transparent; border: 0; color: ${C.text};
+        font-size: 15px; outline: none;
+        font-family: ui-monospace, monospace;
+      }
+      .hk-input::placeholder { color: ${C.textDim}; }
+
+      /* CARDS */
       .hk-card {
         background: ${C.surface};
         border: 1px solid ${C.border};
         border-radius: 14px;
-        padding: 20px 22px;
-        box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 24px 40px rgba(0,0,0,0.3);
+        padding: 22px;
+        box-shadow: 0 24px 40px rgba(0,0,0,0.3);
       }
       .hk-card-head {
         display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
       }
       .hk-h {
-        font-size: 12px; font-weight: 700; letter-spacing: 0.2em;
-        text-transform: uppercase; color: ${C.text};
-        margin: 0;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.22em;
+        text-transform: uppercase; color: ${C.text}; margin: 0;
       }
-
-      /* ADD TASK */
-      .hk-add {
-        display: flex; align-items: stretch; gap: 8px;
-        background: ${C.surface};
-        border: 1px solid ${C.border};
-        border-radius: 14px;
-        padding: 10px 14px;
-        margin-bottom: 0;
-      }
-      .hk-prompt { color: ${C.green}; font-family: ui-monospace, monospace; align-self: center; }
-      .hk-input {
-        flex: 1; background: transparent; border: 0; color: ${C.text};
-        font-size: 14px; outline: none;
-      }
-      .hk-input::placeholder { color: ${C.textDim}; }
-      .hk-select {
-        background: ${C.surface2}; border: 1px solid ${C.border}; color: ${C.text};
-        font-family: ui-monospace, monospace; font-size: 12px;
-        padding: 6px 10px; border-radius: 8px; outline: none;
-      }
+      .hk-empty-state { text-align: center; padding: 56px 22px; }
 
       /* BUTTONS */
       .hk-btn {
         background: transparent; border: 1px solid ${C.border}; color: ${C.text};
-        padding: 6px 12px; border-radius: 8px;
+        padding: 8px 14px; border-radius: 8px;
         font-family: ui-monospace, monospace; font-size: 12px;
         cursor: pointer; transition: all 0.18s ease;
       }
@@ -519,127 +589,143 @@ function Styles() {
         font-weight: 700;
       }
       .hk-btn-primary:hover { background: #22ffaa; color: ${C.bg}; }
+      .hk-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
       .hk-btn-ghost { background: transparent; }
-      .hk-btn-sm { padding: 4px 8px; font-size: 11px; }
 
-      /* TABS */
-      .hk-tabs { display: flex; gap: 4px; }
-      .hk-tab {
-        background: transparent; border: 0; color: ${C.textDim};
-        font-family: ui-monospace, monospace; font-size: 11px;
-        padding: 6px 10px; border-radius: 6px;
-        cursor: pointer; text-transform: lowercase;
-        display: inline-flex; align-items: center; gap: 6px;
+      /* GRID / TABLE */
+      .hk-grid-card { padding: 0; overflow: hidden; }
+      .hk-table-scroll { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+      .hk-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+        min-width: 480px;
       }
-      .hk-tab:hover { color: ${C.text}; background: ${C.surface2}; }
-      .hk-tab.is-active { color: ${C.green}; background: rgba(0,255,156,0.08); }
-      .hk-tab-count {
-        background: ${C.surface2}; color: ${C.textDim};
-        font-size: 10px; padding: 1px 6px; border-radius: 99px;
+      .hk-table th, .hk-table td {
+        padding: 0;
+        border-bottom: 1px solid ${C.border};
       }
-      .hk-tab.is-active .hk-tab-count { background: rgba(0,255,156,0.15); color: ${C.green}; }
+      .hk-table thead th {
+        position: sticky; top: 0;
+        background: ${C.surface2};
+        border-bottom: 1px solid ${C.borderHi};
+        font-family: ui-monospace, monospace;
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em;
+        color: ${C.textDim};
+        padding: 14px 12px;
+        text-align: left;
+        z-index: 2;
+      }
+      .hk-th-date {
+        position: sticky; left: 0; z-index: 3 !important;
+        min-width: 110px;
+      }
+      .hk-th-goal { min-width: 140px; }
+      .hk-th-total { min-width: 80px; text-align: right; padding-right: 18px !important; }
 
-      /* TASKS LIST */
-      .hk-tasks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
-      .hk-task {
-        display: flex; align-items: center; gap: 12px;
-        padding: 12px 10px; border-radius: 10px;
-        transition: background 0.18s ease;
+      .hk-row { transition: background 0.12s ease; }
+      .hk-row:hover { background: ${C.surface2}; }
+      .hk-row.is-weekend { background: rgba(255,255,255,0.012); }
+      .hk-row.is-today {
+        background: rgba(0,255,156,0.04);
+        border-left: 3px solid ${C.green};
       }
-      .hk-task:hover { background: ${C.surface2}; }
-      .hk-task-done .hk-task-title { color: ${C.textDim}; text-decoration: line-through; }
+      .hk-row.is-today .hk-td-date { color: ${C.green}; }
 
-      .hk-status {
-        background: transparent; border: 0; cursor: pointer;
-        font-size: 22px; line-height: 1; color: ${C.textDim};
-        transition: color 0.18s ease;
-        padding: 0; width: 28px; height: 28px;
+      .hk-td-date {
+        position: sticky; left: 0;
+        background: ${C.surface};
+        padding: 14px 14px;
+        text-align: left;
+        font-weight: 600;
+        z-index: 1;
+        border-right: 1px solid ${C.border};
+        display: flex; flex-direction: column; gap: 2px;
       }
-      .hk-status-todo { color: ${C.textDim}; }
-      .hk-status-in_progress { color: ${C.cyan}; }
-      .hk-status-done { color: ${C.green}; }
-      .hk-status:hover { transform: scale(1.1); }
+      .hk-row:hover .hk-td-date { background: ${C.surface2}; }
+      .hk-row.is-today .hk-td-date { background: rgba(0,255,156,0.04); }
+      .hk-dow { font-size: 12px; letter-spacing: 0.14em; }
+      .hk-date { font-size: 10px; letter-spacing: 0.1em; }
 
-      .hk-priority-dot {
-        width: 8px; height: 8px; border-radius: 999px;
-        flex-shrink: 0;
-      }
-      .hk-task-title {
-        flex: 1; color: ${C.text}; font-size: 14px;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
-      .hk-tag {
-        background: ${C.surface2}; color: ${C.purple};
-        font-family: ui-monospace, monospace; font-size: 11px;
-        padding: 2px 8px; border-radius: 99px;
-      }
-      .hk-task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.18s ease; }
-      .hk-task:hover .hk-task-actions { opacity: 1; }
-      @media (max-width: 640px) { .hk-task-actions { opacity: 1; } }
-
-      .hk-empty { padding: 24px 0; text-align: center; }
-
-      /* STATS */
-      .hk-stat-row {
-        display: grid; grid-template-columns: 1fr 1fr 1fr;
-        gap: 8px;
-      }
-      .hk-stat {
+      .hk-td-cell { padding: 8px; }
+      .hk-cell {
+        width: 100%;
+        background: transparent;
+        border: 1px dashed transparent;
+        border-radius: 6px;
+        padding: 8px 10px;
+        color: ${C.text};
+        font-family: ui-monospace, monospace;
+        font-size: 13px;
         text-align: center;
-        background: ${C.surface2};
-        border-radius: 10px;
-        padding: 14px 4px;
+        outline: none;
+        transition: all 0.15s ease;
       }
-      .hk-stat-num { font-size: 28px; font-weight: 700; line-height: 1; }
-      .hk-stat-label { font-size: 10px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.15em; }
+      .hk-cell::placeholder { color: ${C.textDim}; }
+      .hk-cell:hover { border-color: ${C.borderHi}; background: ${C.surface2}; }
+      .hk-cell:focus {
+        border-color: ${C.green} !important;
+        background: rgba(0,255,156,0.08) !important;
+        box-shadow: 0 0 0 2px rgba(0,255,156,0.15);
+      }
 
-      /* CALENDAR */
-      .hk-cal-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
-      }
-      .hk-cal-dow { font-size: 10px; text-align: center; padding: 4px 0; text-transform: uppercase; }
-      .hk-cal-cell {
-        aspect-ratio: 1;
-        position: relative;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        border-radius: 8px;
+      .hk-td-total {
+        text-align: right;
+        padding: 14px 18px;
+        font-weight: 700;
+        font-size: 13px;
+        border-left: 1px solid ${C.border};
         background: ${C.surface2};
-        font-size: 12px;
       }
-      .hk-cal-empty { background: transparent; }
-      .hk-cal-day { color: ${C.text}; }
-      .hk-cal-cell.is-today {
-        background: ${C.green};
-        box-shadow: 0 0 14px rgba(0,255,156,0.6);
-      }
-      .hk-cal-cell.is-today .hk-cal-day { color: ${C.bg}; font-weight: 700; }
-      .hk-cal-dot {
-        position: absolute; bottom: 4px;
-        width: 5px; height: 5px; border-radius: 999px;
-        background: ${C.cyan};
-      }
-      .hk-cal-cell.is-today .hk-cal-dot { background: ${C.bg}; opacity: 0.7; }
 
-      /* BARS */
+      /* GOAL HEADER (in <th>) */
+      .hk-goal-head { display: flex; align-items: center; gap: 8px; }
+      .hk-goal-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+      .hk-goal-name {
+        color: ${C.text}; font-family: inherit; cursor: text;
+        text-transform: none; letter-spacing: 0;
+      }
+      .hk-goal-edit {
+        background: ${C.surface3}; border: 1px solid ${C.borderHi};
+        color: ${C.text}; border-radius: 4px;
+        padding: 2px 6px; outline: none;
+        font-family: ui-monospace, monospace; font-size: 11px;
+        width: 100px;
+      }
+      .hk-x {
+        background: transparent; border: 0; color: ${C.textDim};
+        cursor: pointer; padding: 0 4px; font-size: 16px;
+        margin-left: auto; line-height: 1; opacity: 0;
+        transition: opacity 0.15s, color 0.15s;
+      }
+      .hk-th-goal:hover .hk-x { opacity: 1; }
+      .hk-x:hover { color: ${C.red}; }
+
+      /* CHART */
+      .hk-chart-meta { display: flex; align-items: center; font-size: 11px; }
       .hk-bars {
         display: grid;
         grid-template-columns: repeat(14, 1fr);
-        gap: 4px;
+        gap: 5px;
         align-items: end;
-        height: 130px;
+        height: 160px;
       }
       .hk-bar-col {
         display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
         height: 100%;
+        position: relative;
+      }
+      .hk-bar-val {
+        font-size: 9px;
+        margin-bottom: 4px;
+        height: 12px;
       }
       .hk-bar {
         width: 100%;
         border-radius: 3px 3px 0 0;
         min-height: 2px;
-        transition: opacity 0.18s ease;
+        transition: opacity 0.18s ease, height 0.4s ease;
       }
       .hk-bar-label { font-size: 9px; margin-top: 6px; }
     `}</style>

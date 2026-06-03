@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HackerConsole from "./HackerConsole";
 
-export const metadata = { title: "Hacker Console", robots: { index: false, follow: false } };
+export const metadata = {
+  title: "Hacker Console",
+  robots: { index: false, follow: false },
+};
+
+const DAYS_BACK = 21; // 3 weeks of history visible
 
 export default async function HackerPage() {
   const supabase = createClient();
@@ -11,19 +16,34 @@ export default async function HackerPage() {
   const role = (user.app_metadata?.role as string) || "";
   if (role !== "hacker") redirect("/login");
 
-  // Initial data fetch (server-side)
-  const [tasks, daily, today] = await Promise.all([
-    supabase.from("hacker_tasks").select("*").order("position", { ascending: true }).order("created_at", { ascending: false }),
-    supabase.from("hacker_daily_hours").select("*").gte("log_date", new Date(Date.now() - 13 * 86400e3).toISOString().slice(0, 10)),
-    supabase.from("hacker_today").select("*").single(),
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - DAYS_BACK);
+  const cutoffIso = cutoff.toISOString().slice(0, 10);
+
+  const [goals, entries, totals] = await Promise.all([
+    supabase
+      .from("hacker_goals")
+      .select("*")
+      .is("archived_at", null)
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("hacker_entries")
+      .select("*")
+      .gte("entry_date", cutoffIso),
+    supabase
+      .from("hacker_daily_totals")
+      .select("*")
+      .gte("entry_date", cutoffIso),
   ]);
 
   return (
     <HackerConsole
       userEmail={user.email ?? "hacker"}
-      initialTasks={tasks.data ?? []}
-      initialDaily={daily.data ?? []}
-      initialToday={today.data ?? { done_today: 0, open_count: 0, hours_today: 0 }}
+      initialGoals={goals.data ?? []}
+      initialEntries={entries.data ?? []}
+      initialTotals={totals.data ?? []}
+      daysBack={DAYS_BACK}
     />
   );
 }
