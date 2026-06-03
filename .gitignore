@@ -24,3 +24,6 @@ WhatsApp Image*
 WhatsApp Video*
 Gemini_Generated_Image*
 Copy of the Garima effect.pdf
+
+# Allow the hero loop video specifically (overrides *.mp4 above)
+!frontend/public/hero-loop.mp4
