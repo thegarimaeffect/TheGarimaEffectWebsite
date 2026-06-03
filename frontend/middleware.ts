@@ -4,11 +4,12 @@ import { previewRoleFromRequest } from "@/lib/supabase/preview-edge";
 import type { UserRole } from "@/lib/supabase/database.types";
 
 const PUBLIC_PATHS = ["/", "/about", "/services", "/case-studies", "/blog", "/faq", "/contact", "/login", "/signup", "/auth", "/preview", "/robots.txt", "/sitemap.xml", "/llms.txt", "/favicon.ico"];
-const ROLE_HOME: Record<UserRole, string> = {
+const ROLE_HOME: Record<string, string> = {
   admin: "/admin",
   product_manager: "/pm",
   intern: "/intern",
   client: "/client",
+  hacker: "/hacker",
 };
 
 /**
@@ -106,17 +107,18 @@ export async function middleware(request: NextRequest) {
   }
 
   // Role-gated routes
-  const gates: Array<{ prefix: string; allowed: UserRole[] }> = [
+  const gates: Array<{ prefix: string; allowed: string[] }> = [
     { prefix: "/admin", allowed: ["admin"] },
     { prefix: "/pm", allowed: ["product_manager", "admin"] },
     { prefix: "/intern", allowed: ["intern", "admin"] },
     { prefix: "/client", allowed: ["client", "admin"] },
+    { prefix: "/hacker", allowed: ["hacker"] },     // private console, hacker only
   ];
 
   for (const g of gates) {
     if (path === g.prefix || path.startsWith(`${g.prefix}/`)) {
       if (!g.allowed.includes(role)) {
-        return redirectPreservingCookies(request, response, ROLE_HOME[role]);
+        return redirectPreservingCookies(request, response, ROLE_HOME[role] || "/login");
       }
     }
   }
