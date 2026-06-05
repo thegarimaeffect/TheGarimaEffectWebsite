@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -98,8 +98,25 @@ export default function HackerConsole({
   const supabase = useMemo(() => createClient(), []);
   const [goals, setGoals] = useState<Goal[]>(initialGoals);
   const [entries, setEntries] = useState<Entry[]>(initialEntries);
+  const [visibleDays, setVisibleDays] = useState<number>(daysBack);
 
-  const dayList = useMemo(() => buildDayList(daysBack), [daysBack]);
+  const dayList = useMemo(() => buildDayList(visibleDays), [visibleDays]);
+
+  // Total days actually logged (for the "show more" button to know when to stop)
+  const oldestEntryDate = useMemo(() => {
+    if (entries.length === 0) return null;
+    return entries.reduce(
+      (acc, e) => (acc === null || e.entry_date < acc ? e.entry_date : acc),
+      null as string | null
+    );
+  }, [entries]);
+
+  const hasMore = useMemo(() => {
+    if (!oldestEntryDate) return false;
+    const oldestIso = oldestEntryDate;
+    const lastShown = dayList[dayList.length - 1];
+    return lastShown > oldestIso;
+  }, [oldestEntryDate, dayList]);
 
   // Map (goal_id|date) → hours for O(1) lookup
   const entryMap = useMemo(() => {
@@ -252,6 +269,23 @@ export default function HackerConsole({
             onRenameGoal={renameGoal}
             onArchiveGoal={archiveGoal}
           />
+
+          {goals.length > 0 && (
+            <div className="hk-show-more">
+              {hasMore ? (
+                <button
+                  onClick={() => setVisibleDays((n) => n + 30)}
+                  className="hk-btn hk-btn-ghost"
+                >
+                  ↓ show 30 more days
+                </button>
+              ) : (
+                <span className="hk-mono hk-dim" style={{ fontSize: 11 }}>
+                  · end of logged history ·
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <ChartCard days={chartDays} dailyTotals={dailyTotals} max={chartMax} />
@@ -363,24 +397,28 @@ function SpreadsheetGrid({
             {days.map((date) => {
               const meta = fmtDateRow(date);
               const total = dailyTotals.get(date) || 0;
+              const locked = !meta.isToday;          // only TODAY is editable
               return (
                 <tr
                   key={date}
                   className={
                     "hk-row" +
                     (meta.isToday ? " is-today" : "") +
-                    (meta.isWeekend ? " is-weekend" : "")
+                    (meta.isWeekend ? " is-weekend" : "") +
+                    (locked ? " is-locked" : "")
                   }
                 >
                   <th className="hk-td-date">
                     <span className="hk-mono hk-dow">{meta.line1}</span>
                     <span className="hk-mono hk-dim hk-date">{meta.line2}</span>
+                    {locked && <span className="hk-lock hk-mono" title="closed — cannot be edited">🔒</span>}
                   </th>
                   {goals.map((g) => (
                     <td key={g.id} className="hk-td-cell">
                       <Cell
                         value={entryMap.get(`${g.id}|${date}`)}
                         color={g.color || C.green}
+                        locked={locked}
                         onChange={(h) => onCellChange(g.id, date, h)}
                       />
                     </td>
@@ -444,17 +482,22 @@ function GoalHeader({
 function Cell({
   value,
   color,
+  locked,
   onChange,
 }: {
   value: number | undefined;
   color: string;
+  locked: boolean;          // true = past day, read-only
   onChange: (h: number) => void;
 }) {
   const [draft, setDraft] = useState<string>(value && value > 0 ? String(value) : "");
-  // sync external value
-  useMemo(() => { setDraft(value && value > 0 ? String(value) : ""); /* eslint-disable-next-line */ }, [value]);
+  // Sync local draft when external value changes (e.g. after save or refresh)
+  useEffect(() => {
+    setDraft(value && value > 0 ? String(value) : "");
+  }, [value]);
 
   const commit = () => {
+    if (locked) return;
     if (draft === "") {
       if (value && value > 0) onChange(0);
       return;
@@ -468,6 +511,24 @@ function Cell({
   };
 
   const intensity = value && value > 0 ? Math.min(1, value / 6) : 0;
+  const display = value && value > 0 ? value.toFixed(value % 1 === 0 ? 0 : 1) : "";
+
+  // Locked past-day cell — render a static view, no editable input
+  if (locked) {
+    return (
+      <div
+        className="hk-cell hk-cell-locked"
+        title="this day is closed and cannot be edited"
+        style={{
+          background: intensity > 0 ? `rgba(0,255,156,${0.05 + intensity * 0.14})` : "transparent",
+          color: intensity > 0 ? color : C.textDim,
+        }}
+      >
+        {display || "—"}
+      </div>
+    );
+  }
+
   return (
     <input
       value={draft}
@@ -723,6 +784,23 @@ function Styles() {
         border-color: ${C.green} !important;
         background: rgba(0,255,156,0.08) !important;
         box-shadow: 0 0 0 2px rgba(0,255,156,0.15);
+      }
+      .hk-cell-locked {
+        cursor: not-allowed;
+        user-select: none;
+        opacity: 0.85;
+      }
+      .hk-cell-locked:hover { background: transparent !important; border-color: transparent !important; }
+      .hk-lock {
+        font-size: 9px;
+        margin-left: 6px;
+        opacity: 0.5;
+      }
+      .hk-row.is-locked { opacity: 0.92; }
+
+      .hk-show-more {
+        display: flex; justify-content: center;
+        padding: 14px 0 4px;
       }
 
       .hk-td-total {

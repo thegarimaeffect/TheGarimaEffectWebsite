@@ -7,7 +7,10 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const DAYS_BACK = 21; // 3 weeks of history visible
+// History is permanent — we fetch ALL entries the user has ever logged.
+// Past days are locked at the database level (see migration 000004).
+const DEFAULT_VISIBLE_DAYS = 30; // how many day-rows to render by default;
+// older history exists in the DB and the user can scroll/load more.
 
 export default async function HackerPage() {
   const supabase = createClient();
@@ -16,10 +19,7 @@ export default async function HackerPage() {
   const role = (user.app_metadata?.role as string) || "";
   if (role !== "hacker") redirect("/login");
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - DAYS_BACK);
-  const cutoffIso = cutoff.toISOString().slice(0, 10);
-
+  // Fetch ALL history — no date cutoff. Data is kept forever.
   const [goals, entries, totals] = await Promise.all([
     supabase
       .from("hacker_goals")
@@ -30,11 +30,11 @@ export default async function HackerPage() {
     supabase
       .from("hacker_entries")
       .select("*")
-      .gte("entry_date", cutoffIso),
+      .order("entry_date", { ascending: false }),
     supabase
       .from("hacker_daily_totals")
       .select("*")
-      .gte("entry_date", cutoffIso),
+      .order("entry_date", { ascending: false }),
   ]);
 
   return (
@@ -43,7 +43,7 @@ export default async function HackerPage() {
       initialGoals={goals.data ?? []}
       initialEntries={entries.data ?? []}
       initialTotals={totals.data ?? []}
-      daysBack={DAYS_BACK}
+      daysBack={DEFAULT_VISIBLE_DAYS}
     />
   );
 }
