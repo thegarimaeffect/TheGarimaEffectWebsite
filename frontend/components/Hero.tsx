@@ -69,19 +69,9 @@ export default function Hero() {
         </p>
       </motion.div>
 
-      {/* MAIN STAGE — 3D envelope reveal */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-32 md:pt-36 pb-24">
-        <motion.p
-          initial={{ opacity: 0, letterSpacing: "0.2em" }}
-          animate={{ opacity: 1, letterSpacing: "0.5em" }}
-          transition={{ delay: 0.4, duration: 0.9 }}
-          className="text-[11px] md:text-[12px] tracking-[0.5em] uppercase font-bold mb-1 px-6"
-          style={{ color: "var(--color-accent-rose)" }}
-        >
-          Boutique Brand Strategy Studio
-        </motion.p>
-
-        {/* 3D Three.js envelope reveal */}
+      {/* MAIN STAGE — envelope reveal */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-28 md:pt-32 pb-24">
+        {/* envelope reveal animation */}
         <div className="w-full">
           <EnvelopeHero />
         </div>
