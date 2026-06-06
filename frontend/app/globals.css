@@ -733,28 +733,72 @@ html.lenis body {
   .hv-halo { animation: none !important; }
 }
 
-/* ─────────── Founder Speaks reel rail ─────────── */
+
+/* ─────────── Founder Speaks reel rail (glass posters) ─────────── */
 .fs-rail {
   display: flex;
-  gap: 20px;
+  gap: 22px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 8px 4px 16px;
+  padding: 8px 50px 16px;
   width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 .fs-card {
+  position: relative;
   flex: 0 0 auto;
-  width: min(340px, 80vw);
+  width: min(300px, 74vw);
+  aspect-ratio: 9 / 16;
   scroll-snap-align: center;
-  border-radius: 18px;
+  border-radius: 22px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 16px 40px rgba(155,127,199,0.22);
-  border: 1px solid rgba(232,84,122,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-decoration: none;
+  /* glassy, merges with the pink section behind it */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 18px 44px rgba(155,127,199,0.22), inset 0 1px 0 rgba(255,255,255,0.5);
+  transition: box-shadow 0.25s ease;
 }
-.fs-card .instagram-media {
-  border-radius: 18px !important;
+.fs-card:hover {
+  box-shadow: 0 26px 60px rgba(155,127,199,0.34), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.fs-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-deep);
+  text-shadow: 0 2px 10px rgba(255,255,255,0.6);
+}
+.fs-views svg { color: var(--color-accent-rose); }
+.fs-play {
+  width: 64px; height: 64px;
+  border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+  transition: transform 0.2s ease;
+}
+.fs-card:hover .fs-play { transform: scale(1.12); }
+.fs-cta {
+  position: absolute;
+  bottom: 18px; left: 0; right: 0;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-text-deep);
+  opacity: 0.7;
 }
 .fs-arrow {
   position: absolute;
