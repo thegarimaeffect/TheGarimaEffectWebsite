@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SubpageShell, { JsonLd } from "@/components/SubpageShell";
+import CalendlyInline from "@/components/CalendlyInline";
 import { SITE_URL } from "@/lib/seo-content";
 
 export const metadata: Metadata = {
@@ -69,6 +70,11 @@ export default function ContactPage() {
         title="Let's talk"
         subtitle="Book a 30-minute discovery call. Free, direct with Garima, no pitch deck. By the end you'll know whether we're a fit — and if not, we'll point you to someone better."
       >
+        {/* Live Calendly booking calendar */}
+        <div className="my-8">
+          <CalendlyInline />
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6 my-8">
           <a
             href="https://www.instagram.com/garimaeffect"

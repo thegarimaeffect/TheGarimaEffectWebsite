@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";
 
-export const CALENDLY_URL = "https://calendly.com/garimaeffect";
+export const CALENDLY_URL = "https://calendly.com/thegarimaeffect/30min";
 
 interface Props {
   open: boolean;
