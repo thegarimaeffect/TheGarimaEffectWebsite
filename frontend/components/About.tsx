@@ -158,22 +158,31 @@ export default function About() {
             style={{ color: "var(--color-text-body)" }}
           >
             <p>
-              Garima Rana is a content strategist, brand storyteller, and the
-              creative engine behind <em>The Garima Effect</em> — a boutique
-              studio that helps founders turn a feed full of noise into a
-              brand people remember.
+              Garima Rana is a brand strategist, the marketing-language
+              translator, and the creative engine behind{" "}
+              <em>The Garima Effect</em> — a boutique studio that helps founders
+              turn an idea full of chaos into a brand people remember.
             </p>
             <p>
-              Since 2020 she has shaped the voice, scripts, funnels, and feed
-              of <strong style={{ color: "var(--color-text-deep)" }}>60+ brands</strong>{" "}
-              across beauty, wellness, hospitality, fashion and food — moving
-              over <strong style={{ color: "var(--color-text-deep)" }}>120M views</strong>{" "}
-              and translating attention into revenue.
+              Since 2020 she has shaped the voice, scripts, and funnels of
+              prominent brands across various niches — moving views, building a
+              well-designed feed, and creating content that speaks. But she
+              realised there was a <strong style={{ color: "var(--color-text-deep)" }}>gap</strong>:
+              a big void that no one filled.
             </p>
             <p>
-              Her practice sits at the rare intersection of taste, story and
-              numbers: every reel earns its hook, every caption earns its
-              click, every funnel earns its yes.
+              Brands run on revenue. Brands need scalability, yes — but what
+              they also need is <strong style={{ color: "var(--color-text-deep)" }}>stability</strong>.
+              Content alone wasn&rsquo;t the most efficient way to achieve brand
+              goals, and her expertise in sales would not let her brands settle
+              for less. That is how The Garima Effect was curated.
+            </p>
+            <p>
+              Her practice sits at the rare intersection of sales and
+              marketing — the perfect mix of inbound and outbound to reach your
+              ideal client. Nothing less, nothing more. With Garima, every reel
+              earns its hook, every caption earns its click, every funnel earns
+              its yes.
             </p>
           </motion.div>
 
@@ -193,8 +202,9 @@ export default function About() {
                 color: "var(--color-text-deep)",
               }}
             >
-              "I don't sell content. I sell the way a brand makes someone feel
-              the second they see it."
+              "Your brand does not need a separate marketing team and a group
+              of sales executives. You need a consultant who helps you through
+              it all."
             </p>
             <p
               className="mt-3 text-[11px] tracking-[0.4em] uppercase"
