@@ -748,8 +748,8 @@ html.lenis body {
 .fs-card {
   position: relative;
   flex: 0 0 auto;
-  width: min(300px, 74vw);
-  aspect-ratio: 9 / 16;
+  width: min(360px, 82vw);
+  aspect-ratio: 3 / 4;   /* shorter than the video so the bottom likes/footer bar is cropped off */
   scroll-snap-align: center;
   border-radius: 22px;
   overflow: hidden;            /* clips the iframe's header + footer */
@@ -768,11 +768,12 @@ html.lenis body {
 .fs-crop iframe {
   position: absolute;
   left: 50%;
-  top: -56px;                  /* hide IG header */
-  transform: translateX(-50%);
+  top: -54px;                          /* clip IG header */
+  transform: translateX(-50%) scale(1.04);
+  transform-origin: top center;
   width: 100%;
   min-width: 320px;
-  height: calc(100% + 230px);  /* extra height pushes likes/caption below */
+  height: calc(100% + 300px);          /* footer/likes fall below the card edge */
   border: 0;
   background: #000;
 }
