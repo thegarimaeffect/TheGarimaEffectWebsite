@@ -4,24 +4,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useRef } from "react";
 
-const PILLARS = [
-  {
-    icon: "✦",
-    title: "Voice First",
-    desc: "Every brand has a sound. I find yours, then make it impossible to mistake for anyone else's.",
-  },
-  {
-    icon: "◆",
-    title: "Story Architect",
-    desc: "Hooks, arcs, and pay-offs that make people stop scrolling — and start buying.",
-  },
-  {
-    icon: "✿",
-    title: "Numbers-aware",
-    desc: "Taste with a calculator next to it. Every reel, every funnel, every caption is measured.",
-  },
-];
-
 export default function About() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -221,41 +203,6 @@ export default function About() {
               — Garima Rana
             </p>
           </motion.div>
-        </div>
-      </div>
-
-      {/* PILLARS (stats moved up into the Hero — keep the three principles here) */}
-      <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {PILLARS.map((p, i) => (
-            <motion.div
-              key={p.title}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ delay: i * 0.12, duration: 0.7 }}
-              className="glass p-7"
-            >
-              <div
-                className="text-3xl mb-3"
-                style={{ color: "#e8547a" }}
-              >
-                {p.icon}
-              </div>
-              <h4
-                className="font-bold text-lg mb-2"
-                style={{ color: "var(--color-text-deep)" }}
-              >
-                {p.title}
-              </h4>
-              <p
-                className="text-[13px] leading-relaxed"
-                style={{ color: "var(--color-text-body)" }}
-              >
-                {p.desc}
-              </p>
-            </motion.div>
-          ))}
         </div>
       </div>
     </section>
