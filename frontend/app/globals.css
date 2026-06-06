@@ -624,7 +624,7 @@ html.lenis body {
 .env-reveal {
   position: absolute;
   left: 50%;
-  top: 34%;
+  top: 23%;
   width: 0; height: 0;
   z-index: 10;
   pointer-events: none;
@@ -648,7 +648,7 @@ html.lenis body {
   white-space: nowrap;
   text-align: center;
   font-family: var(--font-script), cursive;
-  font-size: clamp(42px, 7.2vw, 92px);
+  font-size: clamp(40px, 6.4vw, 80px);
   line-height: 0.92;
   font-weight: 700;
   color: var(--color-text-deep);
