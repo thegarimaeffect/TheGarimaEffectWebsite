@@ -6,6 +6,7 @@ import IntroAnimation from "@/components/IntroAnimation";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
+import FounderSpeaks from "@/components/FounderSpeaks";
 import Services from "@/components/Services";
 import BrandWork from "@/components/BrandWork";
 import Testimonials from "@/components/Testimonials";
@@ -33,6 +34,7 @@ export default function HomePage() {
         <div className="stack-deck">
           <Hero />
           <About />
+          <FounderSpeaks />
           <Services />
           <BrandWork />
           <Testimonials />
