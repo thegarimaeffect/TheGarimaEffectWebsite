@@ -1,23 +1,25 @@
 "use client";
 
 /**
- * FounderSpeaks — a rail of Garima's reels as clean glass poster cards.
+ * FounderSpeaks — rail of Garima's reels.
  *
- * No Instagram embed chrome (no white box / profile / caption clutter).
- * Each card merges into the section background, shows just the VIEW COUNT
- * and a play button, and opens the reel on Instagram when clicked.
+ * Uses Instagram's own /embed iframe (real thumbnail, plays inline in the
+ * site) but the iframe is CROPPED inside a portrait wrapper so only the
+ * VIDEO shows — the white header (profile/follow) and the bottom bar
+ * (likes/caption/"view on Instagram") are clipped out of view.
+ * A small view-count badge is overlaid on top.
  */
 
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
-type Reel = { url: string; views: string; accent: string };
+type Reel = { id: string; views: string };
 
 const REELS: Reel[] = [
-  { url: "https://www.instagram.com/reel/DVJOZ4kkpyR/", views: "133K", accent: "#e8547a" },
-  { url: "https://www.instagram.com/reel/DVV89KBkhbQ/", views: "88.7K", accent: "#b89ce0" },
-  { url: "https://www.instagram.com/reel/DWY9mRPgVWP/", views: "36K", accent: "#9b7fc7" },
-  { url: "https://www.instagram.com/reel/DV-9OdNAV-e/", views: "Watch", accent: "#ff8aab" },
+  { id: "DVJOZ4kkpyR", views: "133K" },
+  { id: "DVV89KBkhbQ", views: "88.7K" },
+  { id: "DWY9mRPgVWP", views: "36K" },
+  { id: "DV-9OdNAV-e", views: "" },
 ];
 
 export default function FounderSpeaks() {
@@ -39,7 +41,6 @@ export default function FounderSpeaks() {
       }}
     >
       <div className="relative z-10 max-w-[1500px] mx-auto px-6 md:px-12 pt-24 md:pt-32 pb-20 min-h-screen flex flex-col">
-        {/* Heading */}
         <div className="text-center mb-10 md:mb-14">
           <motion.p
             initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
@@ -62,48 +63,44 @@ export default function FounderSpeaks() {
             style={{ color: "var(--color-text-body)" }}
           >
             Garima&rsquo;s most-watched reels — strategy, story, and the
-            marketing language, in her own words.
+            marketing language, in her own words. Press play.
           </motion.p>
         </div>
 
-        {/* Reel rail */}
         <div className="relative flex-1 flex items-center">
           <ArrowBtn dir={-1} onClick={() => scrollBy(-1)} />
           <div ref={railRef} data-lenis-prevent className="fs-rail no-scrollbar">
             {REELS.map((r, i) => (
-              <motion.a
-                key={r.url}
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <motion.div
+                key={r.id}
                 className="fs-card"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.6 }}
-                style={{
-                  background: `linear-gradient(160deg, ${r.accent}22 0%, rgba(255,255,255,0.06) 60%), linear-gradient(135deg, ${r.accent}33, #ffffff10)`,
-                }}
               >
-                {/* views badge */}
-                <div className="fs-views">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                  <span>{r.views}</span>
+                {/* cropped IG video */}
+                <div className="fs-crop">
+                  <iframe
+                    src={`https://www.instagram.com/reel/${r.id}/embed/`}
+                    title="Instagram reel"
+                    loading="lazy"
+                    scrolling="no"
+                    allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
+                    allowFullScreen
+                  />
                 </div>
-
-                {/* play button */}
-                <div className="fs-play" style={{ background: r.accent }}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-
-                <div className="fs-cta">▶ Watch on Instagram</div>
-              </motion.a>
+                {/* views badge overlay */}
+                {r.views && (
+                  <div className="fs-views">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span>{r.views}</span>
+                  </div>
+                )}
+              </motion.div>
             ))}
           </div>
           <ArrowBtn dir={1} onClick={() => scrollBy(1)} />
