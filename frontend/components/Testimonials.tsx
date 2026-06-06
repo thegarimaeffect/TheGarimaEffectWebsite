@@ -6,38 +6,24 @@ import { useEffect, useState } from "react";
 const FEEDBACK = [
   {
     quote:
-      "Garima didn't just manage our Instagram — she changed how the world sees our brand.",
-    name: "Priya S.",
-    role: "Founder, Lumen Skincare",
-    metric: "+340% Reach",
+      "Garima took our own account from a standing start to 121K views in 7 days — proof the strategy works before she even touches a client brand.",
+    name: "The Garima Effect",
+    role: "In-house · brand launch",
+    metric: "0 → 121K / 7 days",
   },
   {
     quote:
-      "Within 90 days our reach 6×'d and DMs turned into a waitlist. Pure magic — and pure strategy.",
-    name: "Aarav M.",
-    role: "CEO, NorthLane Studio",
-    metric: "6× Growth",
+      "Our California real estate sales tripled after she rebuilt our content and outbound pitch. The marketing language alone changed how clients respond to us.",
+    name: "Reboot Constructions",
+    role: "Real Estate · California",
+    metric: "3× Sales Growth",
   },
   {
     quote:
-      "Her scripts make people stop scrolling. Our last reel hit 2.3M views and 14k saves.",
-    name: "Ishita K.",
-    role: "Creative Director, Bloom & Co.",
-    metric: "2.3M Views",
-  },
-  {
-    quote:
-      "She translated our chaotic vision into a brand story that finally sounds like us.",
-    name: "Rohan D.",
-    role: "Founder, Tide & Tonic",
-    metric: "Cohesive Voice",
-  },
-  {
-    quote:
-      "Working with Garima feels like cheating — except it's all hard work, taste, and instinct.",
-    name: "Maya R.",
-    role: "Head of Growth, Wildflower",
-    metric: "+89% Engagement",
+      "Engagement climbed fast and stayed there. She positioned us as the expert in the room instead of just another vendor in the feed.",
+    name: "Exports Experts Global",
+    role: "B2B Exports",
+    metric: "High Engagement",
   },
 ];
 

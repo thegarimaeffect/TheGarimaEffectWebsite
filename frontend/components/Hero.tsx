@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRef } from "react";
-import RopeReveal from "./RopeReveal";
+import EnvelopeHero from "./EnvelopeHero";
 
 const CAST = [
   "INSTAGRAM GROWTH",
@@ -69,22 +69,49 @@ export default function Hero() {
         </p>
       </motion.div>
 
-      {/* MAIN STAGE — full-width cinematic loop */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-40 md:pt-44 pb-28">
+      {/* MAIN STAGE — 3D envelope reveal */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen pt-32 md:pt-36 pb-24">
         <motion.p
           initial={{ opacity: 0, letterSpacing: "0.2em" }}
           animate={{ opacity: 1, letterSpacing: "0.5em" }}
-          transition={{ delay: 0.6, duration: 0.9 }}
-          className="text-[11px] md:text-[12px] tracking-[0.5em] uppercase font-bold mb-2 px-6"
+          transition={{ delay: 0.4, duration: 0.9 }}
+          className="text-[11px] md:text-[12px] tracking-[0.5em] uppercase font-bold mb-1 px-6"
           style={{ color: "var(--color-accent-rose)" }}
         >
-          ✦ From concept to content ✦
+          Boutique Brand Strategy Studio
         </motion.p>
 
-        {/* full-bleed — no max-width, no padding, video edges dissolve into bg */}
+        {/* 3D Three.js envelope reveal */}
         <div className="w-full">
-          <RopeReveal />
+          <EnvelopeHero />
         </div>
+
+        {/* Tagline + CTA below the animation */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 3.6, duration: 0.9 }}
+          className="text-center max-w-2xl mt-2 px-6 italic leading-relaxed text-[15px] md:text-[18px]"
+          style={{ color: "var(--color-text-body)" }}
+        >
+          Every reel earns its hook. Every caption earns its click. Every
+          funnel earns its yes.
+        </motion.p>
+
+        <motion.a
+          href="/contact"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 3.9, duration: 0.8 }}
+          whileHover={{ scale: 1.05 }}
+          className="mt-6 inline-flex items-center px-8 py-3 rounded-full text-white font-bold text-[12px] tracking-[0.22em] uppercase"
+          style={{
+            background: "linear-gradient(135deg, #e8547a 0%, #b89ce0 100%)",
+            boxShadow: "0 12px 32px rgba(232,84,122,0.4)",
+          }}
+        >
+          ✦ Book a Discovery Call
+        </motion.a>
       </div>
 
       {/* SCROLL HINT */}
