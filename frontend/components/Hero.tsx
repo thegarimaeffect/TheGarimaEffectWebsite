@@ -40,33 +40,6 @@ export default function Hero() {
         <div className="w-full">
           <EnvelopeHero />
         </div>
-
-        {/* Tagline + CTA below the animation */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3.6, duration: 0.9 }}
-          className="text-center max-w-2xl mt-2 px-6 italic leading-relaxed text-[15px] md:text-[18px]"
-          style={{ color: "var(--color-text-body)" }}
-        >
-          Every reel earns its hook. Every caption earns its click. Every
-          funnel earns its yes.
-        </motion.p>
-
-        <motion.a
-          href="/contact"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3.9, duration: 0.8 }}
-          whileHover={{ scale: 1.05 }}
-          className="mt-6 inline-flex items-center px-8 py-3 rounded-full text-white font-bold text-[12px] tracking-[0.22em] uppercase"
-          style={{
-            background: "linear-gradient(135deg, #e8547a 0%, #b89ce0 100%)",
-            boxShadow: "0 12px 32px rgba(232,84,122,0.4)",
-          }}
-        >
-          ✦ Book a Discovery Call
-        </motion.a>
       </div>
 
       {/* SCROLL HINT */}
