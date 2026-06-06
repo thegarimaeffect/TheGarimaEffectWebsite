@@ -73,7 +73,7 @@ export default function Testimonials() {
             className="mt-5 max-w-xl mx-auto text-[14px] md:text-[15px] italic"
             style={{ color: "var(--color-text-body)" }}
           >
-            Five stories. One bundle. Click below to fan them out and feel the
+            A few stories. One bundle. Click below to fan them out and feel the
             effect they felt.
           </motion.p>
         </div>
@@ -293,7 +293,7 @@ function BundleDeck({
             textShadow: "0 4px 30px rgba(232,84,122,0.5)",
           }}
         >
-          Five Stories
+          A Few Stories
         </h3>
       </div>
 

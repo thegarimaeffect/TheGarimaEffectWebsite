@@ -180,18 +180,12 @@ export default function Services() {
                   }}
                 />
 
-                <div className="mt-6 flex items-center justify-between relative">
+                <div className="mt-6 flex items-center relative">
                   <span
                     className="text-[10px] tracking-[0.4em] uppercase"
                     style={{ color: "var(--color-text-muted)" }}
                   >
                     0{i + 1} / 04
-                  </span>
-                  <span
-                    className="font-semibold group-hover:translate-x-1 transition"
-                    style={{ color: s.accent }}
-                  >
-                    Explore →
                   </span>
                 </div>
 
