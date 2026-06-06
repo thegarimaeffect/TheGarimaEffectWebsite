@@ -4,13 +4,6 @@ import { motion } from "framer-motion";
 import { useRef } from "react";
 import EnvelopeHero from "./EnvelopeHero";
 
-const CAST = [
-  "INSTAGRAM GROWTH",
-  "BRAND BUILDING",
-  "SALES FUNNELS",
-  "VIDEO SCRIPTS",
-];
-
 export default function Hero() {
   const ref = useRef<HTMLElement>(null);
 
@@ -25,34 +18,6 @@ export default function Hero() {
     >
       {/* Shimmer particles (existing decorative layer) */}
       <ShimmerLayer />
-
-      {/* TOP CAST ROW */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, duration: 0.7 }}
-        className="absolute top-24 md:top-28 left-0 right-0 z-20 px-6 md:px-16"
-      >
-        <div className="flex items-center justify-between gap-2 max-w-[1500px] mx-auto">
-          <span className="hidden md:block w-12 h-px" style={{ background: "rgba(232,84,122,0.3)" }} />
-          {CAST.map((c, i) => (
-            <motion.span
-              key={c}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0 + i * 0.12, duration: 0.5 }}
-              className="text-[10px] md:text-[12px] font-bold tracking-[0.2em] uppercase whitespace-nowrap"
-              style={{ color: "var(--color-text-deep)" }}
-            >
-              {c}
-              {i < CAST.length - 1 && (
-                <span className="hidden md:inline mx-3 md:mx-6 opacity-30">·</span>
-              )}
-            </motion.span>
-          ))}
-          <span className="hidden md:block w-12 h-px" style={{ background: "rgba(232,84,122,0.3)" }} />
-        </div>
-      </motion.div>
 
       {/* TOP-RIGHT EST */}
       <motion.div

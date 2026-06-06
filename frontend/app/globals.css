@@ -591,136 +591,74 @@ html.lenis body {
   }
 }
 
-/* ─────────── Envelope-reveal hero ─────────── */
+
+/* ─────────── Envelope-reveal hero (unified frame) ─────────── */
 .env-hero {
   position: relative;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px 0;
 }
 .env-stage {
   position: relative;
-  width: min(680px, 92vw);
-  height: clamp(440px, 56vh, 600px);
-  perspective: 1400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: min(860px, 94vw);
+  aspect-ratio: 900 / 640;     /* matches the svg viewBox so % map cleanly */
 }
-
-/* Envelope wrapper */
-.env-wrap {
+.env-svg {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   width: 100%;
-  max-width: 600px;
-  transform-style: preserve-3d;
-  z-index: 1;
+  height: 100%;
+  display: block;
+  overflow: visible;
 }
-.env-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .env-foot {
   font-family: var(--font-script), cursive;
-  font-size: 30px;
+  font-size: 36px;
   fill: var(--color-accent-rose);
-  opacity: 0.8;
+  opacity: 0.78;
 }
 
-/* Top flap — pivots from its top edge */
-.env-flap {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  transform-origin: top center;
-  transform-style: preserve-3d;
-  /* the flap svg sits over the envelope's top band */
-  /* envelope body starts ~34% down; flap height ~ matches triangle */
-}
-.env-flap svg { width: 100%; height: auto; display: block; overflow: visible;
-  filter: drop-shadow(0 6px 10px rgba(155,127,199,0.18)); }
-
-/* Ribbon halves */
-.env-ribbon {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 16px;
-  height: 360px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #e8547a, #c43a60);
-  box-shadow: 0 4px 14px rgba(232,84,122,0.4);
-  transform-origin: center;
-  z-index: 5;
-}
-.env-ribbon-left  { transform: translate(-50%, -50%) translateX(-2px); }
-.env-ribbon-right { transform: translate(-50%, -50%) translateX(2px); }
-
-/* Bow knot */
-.env-bow {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 56px;
-  color: #e8547a;
-  text-shadow: 0 4px 12px rgba(232,84,122,0.45);
-  z-index: 6;
-}
-
-/* Cut flash */
-.env-cut-flash {
-  position: absolute;
-  top: 44%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #fff, #ffd6e3, #fff, transparent);
-  transform-origin: center;
-  border-radius: 2px;
-  box-shadow: 0 0 16px #fff, 0 0 28px var(--color-accent-rose);
-  z-index: 7;
-}
-
-/* Reveal layer (wordmark + orbit) sits centered above envelope mouth */
+/* Reveal layer — anchored on the envelope mouth (50% x), z above svg */
 .env-reveal {
   position: absolute;
-  top: 46%; left: 50%;
-  transform: translate(-50%, -50%);
+  left: 50%;
+  top: 34%;
   width: 0; height: 0;
-  z-index: 8;
+  z-index: 10;
   pointer-events: none;
 }
 .env-halo {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 420px; height: 300px;
+  left: 50%; top: 50%;
+  width: 460px; height: 320px;
   transform: translate(-50%, -50%);
   background: radial-gradient(ellipse at center,
     rgba(232,84,122,0.30) 0%,
-    rgba(184,156,224,0.18) 40%,
+    rgba(184,156,224,0.18) 42%,
     transparent 72%);
-  filter: blur(24px);
+  filter: blur(26px);
   z-index: -1;
 }
 .env-title {
   position: absolute;
-  top: 50%; left: 50%;
+  left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   white-space: nowrap;
   text-align: center;
   font-family: var(--font-script), cursive;
-  font-size: clamp(40px, 7vw, 86px);
-  line-height: 0.95;
+  font-size: clamp(42px, 7.2vw, 92px);
+  line-height: 0.92;
   font-weight: 700;
   color: var(--color-text-deep);
-  text-shadow: 0 3px 24px rgba(232,84,122,0.32), 0 0 50px rgba(255,255,255,0.5);
+  text-shadow: 0 3px 26px rgba(232,84,122,0.30), 0 0 54px rgba(255,255,255,0.55);
 }
-.env-title br { display: block; }
 
 /* Orbiting service labels — site pill style, constant distance */
 .env-orbit-label {
   position: absolute;
-  top: 50%; left: 50%;
+  left: 50%; top: 50%;
   white-space: nowrap;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(9px, 1.05vw, 12px);
@@ -728,7 +666,7 @@ html.lenis body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-text-deep);
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.88);
   backdrop-filter: blur(8px);
   padding: 7px 16px;
   border-radius: 999px;
@@ -736,7 +674,6 @@ html.lenis body {
   box-shadow: 0 8px 22px rgba(155,127,199,0.25);
   will-change: transform, opacity;
 }
-
 @media (max-width: 640px) {
-  .env-orbit-label { font-size: 8px; padding: 5px 10px; letter-spacing: 0.14em; }
+  .env-orbit-label { font-size: 8px; padding: 5px 11px; letter-spacing: 0.13em; }
 }
