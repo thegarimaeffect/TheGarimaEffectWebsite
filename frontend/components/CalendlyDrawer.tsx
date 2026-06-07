@@ -1,10 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const CALENDLY_URL =
   "https://calendly.com/thegarimaeffect/30min?hide_landing_page_details=1&hide_gdpr_banner=1";
+
+declare global {
+  interface Window {
+    Calendly?: {
+      initInlineWidget: (opts: { url: string; parentElement: HTMLElement }) => void;
+    };
+  }
+}
 
 interface Props {
   open: boolean;
@@ -12,6 +20,9 @@ interface Props {
 }
 
 export default function CalendlyDrawer({ open, onClose }: Props) {
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  // Load Calendly's widget script once
   useEffect(() => {
     const id = "calendly-widget-script";
     if (document.getElementById(id)) return;
@@ -21,6 +32,34 @@ export default function CalendlyDrawer({ open, onClose }: Props) {
     script.async = true;
     document.body.appendChild(script);
   }, []);
+
+  // Explicitly (re)initialise the inline widget every time the drawer opens.
+  // The auto-scan only runs at script load, before this div exists — so we
+  // must init it ourselves or it stays blank.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const init = () => {
+      if (cancelled || !widgetRef.current || !window.Calendly) return false;
+      widgetRef.current.innerHTML = "";
+      window.Calendly.initInlineWidget({
+        url: CALENDLY_URL,
+        parentElement: widgetRef.current,
+      });
+      return true;
+    };
+    if (init()) return;
+    // script not ready yet — poll briefly until Calendly is available
+    const timer = setInterval(() => {
+      if (init()) clearInterval(timer);
+    }, 200);
+    const stop = setTimeout(() => clearInterval(timer), 10000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      clearTimeout(stop);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -113,9 +152,8 @@ export default function CalendlyDrawer({ open, onClose }: Props) {
 
             <div className="flex-1 bg-white">
               <div
-                className="calendly-inline-widget"
-                data-url={CALENDLY_URL}
-                style={{ minWidth: "320px", height: "100%" }}
+                ref={widgetRef}
+                style={{ minWidth: "320px", width: "100%", height: "100%" }}
               />
             </div>
 
